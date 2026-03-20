@@ -1,0 +1,42 @@
+{
+  "name": "verseair",
+  "version": "1.0.0",
+  "description": "VerseAir — AI-powered Bible verse projection for churches",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build:win": "electron-builder --win",
+    "update-hash": "node update-hash.js"
+  },
+  "build": {
+    "appId": "com.verseair.app",
+    "productName": "VerseAir",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "bible-verse-projector_6.html",
+      "version.json",
+      "assets/**/*"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "assets/verseair_icon_transparent.png"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": false,
+      "installerIcon": "assets/verseair_icon_transparent.png",
+      "uninstallerIcon": "assets/verseair_icon_transparent.png"
+    }
+  },
+  "author": "VerseAir",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^35.7.5",
+    "electron-builder": "^26.8.1"
+  }
+}
