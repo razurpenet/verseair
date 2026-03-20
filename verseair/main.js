@@ -7,7 +7,7 @@ const crypto = require('crypto');
 
 // ── HOT UPDATE CONFIG ──
 // IMPORTANT: Update these after creating your GitHub repo
-const GITHUB_RAW_BASE = 'https://raw.githubusercontent.com/razurpenet/verseair/master';
+const GITHUB_RAW_BASE = 'https://raw.githubusercontent.com/razurpenet/verseair/master/verseair';
 const VERSION_URL = `${GITHUB_RAW_BASE}/version.json`;
 const HTML_URL = `${GITHUB_RAW_BASE}/bible-verse-projector_6.html`;
 const UPDATE_CHECK_DELAY = 3000; // 3 seconds after window loads
