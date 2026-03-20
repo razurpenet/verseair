@@ -126,7 +126,7 @@ function checkForProjector() {
         }
       });
 
-      projectorWindow.loadFile(getHtmlPath());
+      projectorWindow.loadURL(`http://127.0.0.1:${localServerPort}/`);
 
       // Auto-grant mic on projector window too
       projectorWindow.webContents.session.setPermissionRequestHandler(
@@ -252,6 +252,58 @@ ipcMain.handle('get-update-status', () => {
   return { available: fs.existsSync(updateHtml) };
 });
 
+// ── LOCAL SERVER ──
+// Serve HTML via localhost so Web Speech API gets a proper origin
+let localServerPort = 0;
+
+function startLocalServer() {
+  return new Promise((resolve) => {
+    const mime = {
+      '.html': 'text/html',
+      '.js': 'application/javascript',
+      '.css': 'text/css',
+      '.png': 'image/png',
+      '.jpg': 'image/jpeg',
+      '.ico': 'image/x-icon',
+      '.svg': 'image/svg+xml',
+      '.json': 'application/json',
+      '.woff': 'font/woff',
+      '.woff2': 'font/woff2',
+      '.ttf': 'font/ttf'
+    };
+
+    const server = http.createServer((req, res) => {
+      let reqPath = decodeURIComponent(req.url.split('?')[0]);
+      let filePath;
+
+      if (reqPath === '/' || reqPath === '/index.html') {
+        filePath = getHtmlPath();
+      } else {
+        filePath = path.join(__dirname, reqPath);
+      }
+
+      if (!fs.existsSync(filePath)) {
+        res.writeHead(404);
+        res.end('Not found');
+        return;
+      }
+
+      const ext = path.extname(filePath).toLowerCase();
+      const contentType = mime[ext] || 'application/octet-stream';
+      const content = fs.readFileSync(filePath);
+      res.writeHead(200, { 'Content-Type': contentType });
+      res.end(content);
+    });
+
+    // Listen on random available port on localhost only
+    server.listen(0, '127.0.0.1', () => {
+      localServerPort = server.address().port;
+      console.log(`Local server running on http://127.0.0.1:${localServerPort}`);
+      resolve(localServerPort);
+    });
+  });
+}
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1200,
@@ -267,7 +319,8 @@ function createWindow() {
 
   createMenu();
 
-  mainWindow.loadFile(getHtmlPath());
+  // Load via localhost so Web Speech API gets a proper origin
+  mainWindow.loadURL(`http://127.0.0.1:${localServerPort}/`);
 
   // Auto-grant microphone permission — no browser dialog
   mainWindow.webContents.session.setPermissionRequestHandler(
@@ -291,7 +344,8 @@ function createWindow() {
   });
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
+  await startLocalServer();
   createWindow();
   createTray();
 
