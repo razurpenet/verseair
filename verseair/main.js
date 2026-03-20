@@ -12,6 +12,10 @@ const VERSION_URL = `${GITHUB_RAW_BASE}/version.json`;
 const HTML_URL = `${GITHUB_RAW_BASE}/bible-verse-projector_6.html`;
 const UPDATE_CHECK_DELAY = 3000; // 3 seconds after window loads
 
+// Enable speech recognition in Electron's Chromium
+app.commandLine.appendSwitch('enable-speech-input');
+app.commandLine.appendSwitch('enable-features', 'WebSpeechAPI');
+
 let mainWindow = null;
 let tray = null;
 
@@ -343,6 +347,15 @@ function createWindow() {
     }
   });
 }
+
+// Spoof Chrome user agent so Google Speech API accepts requests from Electron
+app.on('ready', () => {
+  const ses = require('electron').session.defaultSession;
+  const electronUA = ses.getUserAgent();
+  // Replace "Electron/xx.x.x" with nothing so it looks like standard Chrome
+  const chromeUA = electronUA.replace(/\s*Electron\/\S+/, '');
+  ses.setUserAgent(chromeUA);
+});
 
 app.whenReady().then(async () => {
   await startLocalServer();
