@@ -5,6 +5,17 @@ const https = require('https');
 const http = require('http');
 const crypto = require('crypto');
 
+// ── LOAD .env FILE ──
+const envPath = path.join(__dirname, '.env');
+if (fs.existsSync(envPath)) {
+  fs.readFileSync(envPath, 'utf8').split('\n').forEach(line => {
+    const match = line.match(/^\s*([\w.-]+)\s*=\s*(.*)?\s*$/);
+    if (match && !process.env[match[1]]) {
+      process.env[match[1]] = (match[2] || '').replace(/^['"]|['"]$/g, '');
+    }
+  });
+}
+
 // ── HOT UPDATE CONFIG ──
 // IMPORTANT: Update these after creating your GitHub repo
 const GITHUB_RAW_BASE = 'https://raw.githubusercontent.com/razurpenet/verseair/master/verseair';
@@ -12,7 +23,9 @@ const VERSION_URL = `${GITHUB_RAW_BASE}/version.json`;
 const HTML_URL = `${GITHUB_RAW_BASE}/bible-verse-projector_6.html`;
 const UPDATE_CHECK_DELAY = 3000; // 3 seconds after window loads
 
-// Enable speech recognition in Electron's Chromium
+// ── SPEECH RECOGNITION ──
+// Vosk offline engine is loaded via polyfill in the renderer.
+// These Chromium flags are kept as fallback if Vosk fails to load.
 app.commandLine.appendSwitch('enable-speech-input');
 app.commandLine.appendSwitch('enable-features', 'WebSpeechAPI');
 
@@ -273,7 +286,9 @@ function startLocalServer() {
       '.json': 'application/json',
       '.woff': 'font/woff',
       '.woff2': 'font/woff2',
-      '.ttf': 'font/ttf'
+      '.ttf': 'font/ttf',
+      '.gz': 'application/gzip',
+      '.wasm': 'application/wasm'
     };
 
     const server = http.createServer((req, res) => {
@@ -281,7 +296,20 @@ function startLocalServer() {
       let filePath;
 
       if (reqPath === '/' || reqPath === '/index.html') {
-        filePath = getHtmlPath();
+        // Serve HTML with Vosk polyfill injected
+        const htmlContent = fs.readFileSync(getHtmlPath(), 'utf8');
+        const voskScripts = `
+<!-- Vosk Offline Speech Recognition -->
+<script src="/vosk-browser/dist/vosk.js"><\/script>
+<script src="/vosk-speech-polyfill.js"><\/script>`;
+        // Inject polyfill scripts right after <head> so they load before app code
+        const injected = htmlContent.replace(/<head([^>]*)>/i, `<head$1>${voskScripts}`);
+        res.writeHead(200, { 'Content-Type': 'text/html' });
+        res.end(injected);
+        return;
+      } else if (reqPath.startsWith('/vosk-browser/')) {
+        // Serve vosk-browser library files from node_modules
+        filePath = path.join(__dirname, 'node_modules', reqPath);
       } else {
         filePath = path.join(__dirname, reqPath);
       }
@@ -294,6 +322,19 @@ function startLocalServer() {
 
       const ext = path.extname(filePath).toLowerCase();
       const contentType = mime[ext] || 'application/octet-stream';
+
+      // Stream large files (models) instead of loading into memory
+      const stat = fs.statSync(filePath);
+      if (stat.size > 10 * 1024 * 1024) {
+        res.writeHead(200, {
+          'Content-Type': contentType,
+          'Content-Length': stat.size,
+          'Cache-Control': 'public, max-age=86400'
+        });
+        fs.createReadStream(filePath).pipe(res);
+        return;
+      }
+
       const content = fs.readFileSync(filePath);
       res.writeHead(200, { 'Content-Type': contentType });
       res.end(content);
@@ -349,11 +390,13 @@ function createWindow() {
 }
 
 // Spoof Chrome user agent so Google Speech API accepts requests from Electron
+// Must strip BOTH "Electron/x.x.x" AND the app name "VerseAir/x.x.x"
 app.on('ready', () => {
   const ses = require('electron').session.defaultSession;
   const electronUA = ses.getUserAgent();
-  // Replace "Electron/xx.x.x" with nothing so it looks like standard Chrome
-  const chromeUA = electronUA.replace(/\s*Electron\/\S+/, '');
+  const chromeUA = electronUA
+    .replace(/\s*Electron\/\S+/, '')
+    .replace(/\s*VerseAir\/\S+/, '');
   ses.setUserAgent(chromeUA);
 });
 
