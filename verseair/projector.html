@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>VerseAir — Projector</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0b0c0f;--panel:#111318;--border:#2a2b35;
+  --gold:#c9a84c;--gold-light:#e8c97a;--gold-dim:rgba(201,168,76,0.1);
+  --text:#e8e4d8;--muted:#8a8980;--red:#c0392b;--orange:#e67e22;
+  --green:#27ae60;
+}
+body{background:var(--bg);color:var(--text);font-family:'EB Garamond',Georgia,serif;margin:0;overflow:hidden;width:100vw;height:100vh;display:flex;align-items:center;justify-content:center}
+
+/* Background Canvas */
+#bgCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
+
+/* Verse Display */
+.verse-area{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 60px;max-width:90vw;width:100%}
+.empty-state{display:flex;flex-direction:column;align-items:center;gap:8px;opacity:0.3}
+.empty-icon{font-size:2.4rem;color:var(--gold)}
+.empty-text{font-size:1rem;color:var(--muted);letter-spacing:0.08em;font-family:'Cinzel',serif}
+.verse-content{display:none;flex-direction:column;align-items:center;gap:16px;animation:fadeIn 0.5s ease-out}
+.vref{font-family:'Cinzel',serif;font-size:1.6rem;color:var(--gold);letter-spacing:0.14em;text-transform:uppercase}
+.vdiv{width:80px;height:1.5px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.vline{font-family:'EB Garamond',serif;font-size:2.2rem;line-height:1.6;color:var(--text);max-width:75vw;font-style:italic}
+.vtrans{font-family:'Cinzel',serif;font-size:0.75rem;color:var(--muted);letter-spacing:0.14em;text-transform:uppercase;margin-top:8px}
+.cross-wm{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);font-size:18rem;color:rgba(201,168,76,0.03);pointer-events:none;z-index:0;font-family:'Cinzel',serif}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* Projected Timer */
+.proj-timer{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:80;display:none;flex-direction:column;align-items:center;gap:12px;pointer-events:none}
+.proj-timer.show{display:flex}
+.proj-timer-label{font-family:'Cinzel',serif;font-size:1.6rem;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;text-shadow:0 2px 12px rgba(0,0,0,0.6)}
+.proj-timer-time{font-family:'Cinzel',serif;font-size:6rem;color:var(--text);letter-spacing:0.1em;text-shadow:0 4px 20px rgba(0,0,0,0.7);line-height:1}
+.proj-timer-time.warning{color:var(--orange)}
+.proj-timer-time.expired{color:var(--red);animation:timerPulse 0.5s ease-in-out infinite}
+@keyframes timerPulse{0%,100%{opacity:1}50%{opacity:0.5}}
+
+/* Lower Third */
+.lt-bar{position:fixed;bottom:0;left:0;right:0;z-index:90;transform:translateY(100%);transition:transform 0.4s ease-out;pointer-events:none}
+.lt-bar.show{transform:translateY(0)}
+.lt-content{padding:14px 32px;display:flex;flex-direction:column;gap:2px}
+.lt-title{font-family:'Cinzel',serif;font-size:1.3rem;letter-spacing:0.08em}
+.lt-subtitle{font-family:'EB Garamond',serif;font-size:0.92rem;opacity:0.8}
+
+.lt-bar.lt-speaker{background:linear-gradient(180deg,rgba(17,19,24,0.92) 0%,rgba(17,19,24,0.98) 100%);border-top:2px solid var(--gold)}
+.lt-bar.lt-speaker .lt-title{color:var(--gold-light)}
+.lt-bar.lt-speaker .lt-subtitle{color:var(--muted)}
+
+.lt-bar.lt-announce{background:linear-gradient(180deg,rgba(17,19,24,0.92) 0%,rgba(17,19,24,0.98) 100%);border-top:2px solid var(--gold)}
+.lt-bar.lt-announce .lt-title{color:var(--text);font-size:1.1rem}
+.lt-bar.lt-announce .lt-subtitle{color:var(--muted)}
+
+.lt-bar.lt-emergency{background:linear-gradient(180deg,rgba(120,20,20,0.94) 0%,rgba(80,15,15,0.98) 100%);border-top:3px solid var(--red)}
+.lt-bar.lt-emergency .lt-title{color:#fff;font-size:1.4rem}
+.lt-bar.lt-emergency .lt-subtitle{color:rgba(255,255,255,0.8)}
+.lt-bar.lt-emergency.pulse{animation:ltPulse 1.5s ease-in-out infinite}
+@keyframes ltPulse{0%,100%{opacity:1}50%{opacity:0.7}}
+</style>
+</head>
+<body>
+
+<canvas id="bgCanvas"></canvas>
+<div class="cross-wm">✝</div>
+
+<!-- Timer Overlay -->
+<div class="proj-timer" id="projTimer">
+  <div class="proj-timer-label" id="projTimerLabel"></div>
+  <div class="proj-timer-time" id="projTimerTime">00:00</div>
+</div>
+
+<!-- Lower Third Overlay -->
+<div class="lt-bar" id="lowerThird">
+  <div class="lt-content">
+    <div class="lt-title" id="ltTitle"></div>
+    <div class="lt-subtitle" id="ltSubtitle"></div>
+  </div>
+</div>
+
+<!-- Verse Display -->
+<div class="verse-area">
+  <div class="empty-state" id="emptyState">
+    <div class="empty-icon">✦</div>
+    <div class="empty-text">VerseAir Projector</div>
+  </div>
+  <div class="verse-content" id="vcontent">
+    <div class="vref" id="vref"></div>
+    <div class="vdiv"></div>
+    <div class="vline" id="vline"></div>
+    <div class="vtrans" id="vtrans"></div>
+  </div>
+</div>
+
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// DYNAMIC BACKGROUND ENGINE (same as operator, self-contained)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const BG_ENGINES = {};
+let _activeBg = null;
+let _bgRafId = null;
+
+function getThemeColor(varName) {
+  return getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+}
+function hexToRgb(hex) {
+  hex = hex.replace('#','');
+  if (hex.length === 3) hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
+  const n = parseInt(hex, 16);
+  return [(n>>16)&255, (n>>8)&255, n&255];
+}
+
+BG_ENGINES['gradient-drift'] = {
+  _t:0,
+  start(ctx,w,h){this._t=0},
+  draw(ctx,w,h){
+    this._t+=0.003;
+    const [r,g,b]=hexToRgb(getThemeColor('--gold'));
+    const x=w*(0.5+0.3*Math.sin(this._t)),y=h*(0.5+0.3*Math.cos(this._t*0.7));
+    const grad=ctx.createRadialGradient(x,y,0,x,y,Math.max(w,h)*0.6);
+    grad.addColorStop(0,`rgba(${r},${g},${b},0.08)`);grad.addColorStop(1,'transparent');
+    ctx.clearRect(0,0,w,h);ctx.fillStyle=grad;ctx.fillRect(0,0,w,h);
+  }
+};
+BG_ENGINES['particle-float'] = {
+  _particles:[],
+  start(ctx,w,h){
+    this._particles=[];
+    for(let i=0;i<40;i++) this._particles.push({x:Math.random()*w,y:Math.random()*h,r:Math.random()*2+0.5,vy:-(Math.random()*0.3+0.1),vx:(Math.random()-0.5)*0.2,o:Math.random()*0.4+0.1});
+  },
+  draw(ctx,w,h){
+    const [r,g,b]=hexToRgb(getThemeColor('--gold'));
+    ctx.clearRect(0,0,w,h);
+    for(const p of this._particles){
+      p.x+=p.vx;p.y+=p.vy;
+      if(p.y<-10){p.y=h+10;p.x=Math.random()*w}
+      if(p.x<-10)p.x=w+10;if(p.x>w+10)p.x=-10;
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(${r},${g},${b},${p.o})`;ctx.fill();
+    }
+  }
+};
+BG_ENGINES['light-rays'] = {
+  _t:0,
+  start(ctx,w,h){this._t=0},
+  draw(ctx,w,h){
+    this._t+=0.002;const [r,g,b]=hexToRgb(getThemeColor('--gold'));
+    ctx.clearRect(0,0,w,h);
+    for(let i=0;i<5;i++){
+      const angle=(this._t+i*1.2)%(Math.PI*2),cx=w*0.5,cy=-h*0.1,len=Math.max(w,h)*1.4,spread=0.06;
+      ctx.beginPath();ctx.moveTo(cx,cy);
+      ctx.lineTo(cx+Math.cos(angle-spread)*len,cy+Math.sin(angle-spread)*len);
+      ctx.lineTo(cx+Math.cos(angle+spread)*len,cy+Math.sin(angle+spread)*len);
+      ctx.closePath();ctx.fillStyle=`rgba(${r},${g},${b},0.03)`;ctx.fill();
+    }
+  }
+};
+BG_ENGINES['starfield'] = {
+  _stars:[],
+  start(ctx,w,h){
+    this._stars=[];
+    for(let i=0;i<120;i++) this._stars.push({x:Math.random()*w,y:Math.random()*h,z:Math.random()*3+0.5,o:Math.random()*0.6+0.2});
+  },
+  draw(ctx,w,h){
+    const [r,g,b]=hexToRgb(getThemeColor('--gold'));
+    ctx.clearRect(0,0,w,h);const cx=w/2,cy=h/2;
+    for(const s of this._stars){
+      s.x+=(s.x-cx)*0.001*s.z;s.y+=(s.y-cy)*0.001*s.z;
+      if(s.x<0||s.x>w||s.y<0||s.y>h){s.x=cx+(Math.random()-0.5)*100;s.y=cy+(Math.random()-0.5)*100;s.z=Math.random()*3+0.5}
+      ctx.beginPath();ctx.arc(s.x,s.y,s.z*0.6,0,Math.PI*2);
+      ctx.fillStyle=`rgba(${r},${g},${b},${s.o})`;ctx.fill();
+    }
+  }
+};
+BG_ENGINES['abstract-waves'] = {
+  _t:0,
+  start(ctx,w,h){this._t=0},
+  draw(ctx,w,h){
+    this._t+=0.008;const [r,g,b]=hexToRgb(getThemeColor('--gold'));
+    ctx.clearRect(0,0,w,h);
+    for(let wave=0;wave<3;wave++){
+      ctx.beginPath();const yBase=h*(0.35+wave*0.15),amp=30+wave*15,freq=0.003+wave*0.001,phase=this._t+wave*2;
+      for(let x=0;x<=w;x+=3){
+        const y=yBase+Math.sin(x*freq+phase)*amp+Math.sin(x*freq*2.3+phase*1.5)*(amp*0.3);
+        if(x===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+      }
+      ctx.strokeStyle=`rgba(${r},${g},${b},${0.06-wave*0.015})`;ctx.lineWidth=1.5;ctx.stroke();
+    }
+  }
+};
+
+function startBackground(name){
+  const canvas=$('bgCanvas'),ctx=canvas.getContext('2d');
+  stopBackground();
+  if(name==='none'||!BG_ENGINES[name]){ctx.clearRect(0,0,canvas.width,canvas.height);return}
+  const engine=BG_ENGINES[name];_activeBg=name;
+  function resize(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;engine.start(ctx,canvas.width,canvas.height)}
+  resize();window.addEventListener('resize',resize);engine._resizeHandler=resize;
+  function loop(){if(_activeBg!==name)return;if(!document.hidden)engine.draw(ctx,canvas.width,canvas.height);_bgRafId=requestAnimationFrame(loop)}
+  loop();
+}
+function stopBackground(){
+  if(_bgRafId){cancelAnimationFrame(_bgRafId);_bgRafId=null}
+  if(_activeBg&&BG_ENGINES[_activeBg]&&BG_ENGINES[_activeBg]._resizeHandler)window.removeEventListener('resize',BG_ENGINES[_activeBg]._resizeHandler);
+  _activeBg=null;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// BROADCASTCHANNEL LISTENER
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const channel = new BroadcastChannel('va-channel');
+
+channel.onmessage = (event) => {
+  const { type, payload } = event.data;
+
+  switch (type) {
+
+    case 'verse-update': {
+      $('emptyState').style.display = 'none';
+      const vc = $('vcontent');
+      vc.style.display = 'flex';
+      // Reset animation
+      vc.style.animation = 'none';
+      requestAnimationFrame(() => { vc.style.animation = ''; });
+      $('vref').textContent = payload.ref || '';
+      $('vline').textContent = payload.text || '';
+      $('vtrans').textContent = payload.trans || '';
+      break;
+    }
+
+    case 'verse-clear': {
+      $('vcontent').style.display = 'none';
+      $('emptyState').style.display = 'flex';
+      break;
+    }
+
+    case 'timer-update': {
+      $('projTimerLabel').textContent = payload.label || '';
+      $('projTimerTime').textContent = payload.time || '00:00';
+      const el = $('projTimerTime');
+      el.classList.remove('warning', 'expired');
+      if (payload.state === 'expired') el.classList.add('expired');
+      else if (payload.state === 'warning') el.classList.add('warning');
+      break;
+    }
+
+    case 'timer-visibility': {
+      $('projTimer').classList.toggle('show', !!payload.visible);
+      break;
+    }
+
+    case 'lower-third-show': {
+      const bar = $('lowerThird');
+      bar.className = 'lt-bar lt-' + (payload.type || 'speaker');
+      $('ltTitle').textContent = payload.title || '';
+      $('ltSubtitle').textContent = payload.subtitle || '';
+      if (payload.type === 'emergency') bar.classList.add('pulse');
+      requestAnimationFrame(() => bar.classList.add('show'));
+      break;
+    }
+
+    case 'lower-third-hide': {
+      $('lowerThird').classList.remove('show');
+      break;
+    }
+
+    case 'theme-change': {
+      if (payload.vars) {
+        const root = document.documentElement;
+        for (const [prop, val] of Object.entries(payload.vars)) {
+          root.style.setProperty(prop, val);
+        }
+      }
+      break;
+    }
+
+    case 'bg-change': {
+      startBackground(payload.name || 'none');
+      break;
+    }
+  }
+};
+
+// Request current state from operator on load
+channel.postMessage({ type: 'projector-ready', payload: {} });
+</script>
+</body>
+</html>

@@ -19,6 +19,7 @@ app.commandLine.appendSwitch('enable-speech-input');
 app.commandLine.appendSwitch('enable-features', 'WebSpeechAPI');
 
 let mainWindow = null;
+let projectorWindow = null;
 let tray = null;
 
 function getHtmlPath() {
@@ -105,6 +106,44 @@ function createTray() {
   });
 }
 
+function openProjectorWindow(externalDisplay) {
+  // Close existing projector window if open
+  if (projectorWindow && !projectorWindow.isDestroyed()) {
+    projectorWindow.focus();
+    return;
+  }
+
+  const opts = {
+    backgroundColor: '#0b0c0f',
+    icon: path.join(__dirname, 'assets', 'verseair_icon_transparent.png'),
+    autoHideMenuBar: true,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      nodeIntegration: false,
+      contextIsolation: true
+    }
+  };
+
+  if (externalDisplay) {
+    // Open fullscreen on external display
+    opts.x = externalDisplay.bounds.x;
+    opts.y = externalDisplay.bounds.y;
+    opts.fullscreen = true;
+  } else {
+    // No external display — open as a draggable window
+    opts.width = 1280;
+    opts.height = 720;
+    opts.title = 'VerseAir — Projector';
+  }
+
+  projectorWindow = new BrowserWindow(opts);
+  projectorWindow.loadURL(`http://127.0.0.1:${localServerPort}/projector.html`);
+
+  projectorWindow.on('closed', () => {
+    projectorWindow = null;
+  });
+}
+
 function checkForProjector() {
   const displays = screen.getAllDisplays();
   const primaryDisplay = screen.getPrimaryDisplay();
@@ -123,34 +162,7 @@ function checkForProjector() {
     defaultId: 0
   }).then(({ response }) => {
     if (response === 0) {
-      const projectorWindow = new BrowserWindow({
-        x: externalDisplay.bounds.x,
-        y: externalDisplay.bounds.y,
-        fullscreen: true,
-        backgroundColor: '#0b0c0f',
-        icon: path.join(__dirname, 'assets', 'verseair_icon_transparent.png'),
-        webPreferences: {
-          preload: path.join(__dirname, 'preload.js'),
-          nodeIntegration: false,
-          contextIsolation: true
-        }
-      });
-
-      projectorWindow.loadURL(`http://127.0.0.1:${localServerPort}/`);
-
-      // Auto-grant mic on projector window too
-      projectorWindow.webContents.session.setPermissionRequestHandler(
-        (webContents, permission, callback) => {
-          const allowed = ['media', 'microphone', 'audioCapture'];
-          callback(allowed.includes(permission));
-        }
-      );
-      projectorWindow.webContents.session.setPermissionCheckHandler(
-        (webContents, permission) => {
-          const allowed = ['media', 'microphone', 'audioCapture'];
-          return allowed.includes(permission);
-        }
-      );
+      openProjectorWindow(externalDisplay);
     }
   });
 }
@@ -292,6 +304,16 @@ ipcMain.handle('set-speech-config', (event, key, region) => {
 
 ipcMain.handle('has-speech-config', () => {
   return fs.existsSync(getSpeechConfigPath());
+});
+
+// ── PROJECTOR WINDOW ──
+
+ipcMain.handle('open-projector', () => {
+  const displays = screen.getAllDisplays();
+  const primaryDisplay = screen.getPrimaryDisplay();
+  const externalDisplay = displays.find(d => d.id !== primaryDisplay.id);
+  openProjectorWindow(externalDisplay || null);
+  return true;
 });
 
 // ── LOCAL SERVER ──

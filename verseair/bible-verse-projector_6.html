@@ -588,6 +588,11 @@ body>*:not(#bgCanvas){position:relative;z-index:1}
     <div class="prod-section">
       <div class="sec-label">Production</div>
 
+      <!-- Open Projector -->
+      <div class="prod-group" style="margin-bottom:10px">
+        <button class="prod-btn" id="openProjectorBtn" style="width:100%;padding:8px 10px;font-size:0.68rem">Open Projector Window</button>
+      </div>
+
       <!-- Theme & Background -->
       <div class="prod-group">
         <div class="prod-row">
@@ -2090,6 +2095,12 @@ function renderVerseContent(ref, text, trans) {
     $('vtrans').classList.add('show');
   });
   if (typeof updateNavArrows === 'function') updateNavArrows();
+  // Broadcast to projector
+  vaBroadcast('verse-update', {
+    ref: ref.full,
+    text: `"${text}"`,
+    trans: TRANS_LABELS[trans] || trans.toUpperCase()
+  });
 }
 
 // ── Main entry point: display a range ────────────────────────────────────────
@@ -4145,6 +4156,7 @@ $('clearBtn').addEventListener('click', () => {
   showErr(''); clearAnim();
   $('tbox').innerHTML = '<span class="ph">Speech will appear here…</span>';
   if (typeof updateNavArrows === 'function') updateNavArrows();
+  vaBroadcast('verse-clear', {});
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -5080,6 +5092,7 @@ function applyTheme(name) {
   }
   localStorage.setItem('va-theme', name);
   $('themeSelect').value = name;
+  vaBroadcast('theme-change', { name, vars: theme });
 }
 
 function initThemes() {
@@ -5252,6 +5265,7 @@ function startBackground(name) {
   const canvas = $('bgCanvas');
   const ctx = canvas.getContext('2d');
   stopBackground();
+  vaBroadcast('bg-change', { name });
   if (name === 'none' || !BG_ENGINES[name]) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     localStorage.setItem('va-bg', 'none');
@@ -5329,15 +5343,21 @@ function updateTimerDisplay() {
   $('timerSessionLabel').textContent = label;
 
   // Warning / expired states
+  let state = 'normal';
   display.classList.remove('warning','expired');
   projTime.classList.remove('warning','expired');
   if (timerState.remaining <= 0 && timerState.totalSeconds > 0) {
     display.classList.add('expired');
     projTime.classList.add('expired');
+    state = 'expired';
   } else if (timerState.remaining <= timerState.warnAt && timerState.remaining > 0) {
     display.classList.add('warning');
     projTime.classList.add('warning');
+    state = 'warning';
   }
+
+  // Broadcast to projector
+  vaBroadcast('timer-update', { label, time: timeStr, state });
 }
 
 function timerTick() {
@@ -5388,6 +5408,7 @@ function initTimer() {
     timerState.projected = !timerState.projected;
     $('projTimer').classList.toggle('show', timerState.projected);
     $('timerProjectBtn').classList.toggle('active', timerState.projected);
+    vaBroadcast('timer-visibility', { visible: timerState.projected });
   });
 
   updateTimerDisplay();
@@ -5423,11 +5444,15 @@ function showLowerThird() {
     const dur = (parseInt($('ltDurationInput').value, 10) || 15) * 1000;
     _ltAutoHideTimeout = setTimeout(hideLowerThird, dur);
   }
+
+  // Broadcast to projector
+  vaBroadcast('lower-third-show', { type, title, subtitle });
 }
 
 function hideLowerThird() {
   if (_ltAutoHideTimeout) { clearTimeout(_ltAutoHideTimeout); _ltAutoHideTimeout = null; }
   $('lowerThird').classList.remove('show');
+  vaBroadcast('lower-third-hide', {});
 }
 
 function initLowerThirds() {
@@ -5440,6 +5465,74 @@ function initLowerThirds() {
   });
   // Initial state
   $('ltDurationRow').style.display = 'none';
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// STAGE 2: BROADCAST CHANNEL (MULTI-SCREEN)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+let _vaChannel = null;
+
+function vaBroadcast(type, payload) {
+  if (_vaChannel) {
+    try { _vaChannel.postMessage({ type, payload }); } catch(e) { /* channel closed */ }
+  }
+}
+
+function sendCurrentStateToProjector() {
+  // Send current theme
+  const themeName = localStorage.getItem('va-theme') || 'classic-dark';
+  const themeVars = THEMES[themeName];
+  if (themeVars) vaBroadcast('theme-change', { name: themeName, vars: themeVars });
+
+  // Send current background
+  const bgName = localStorage.getItem('va-bg') || 'none';
+  vaBroadcast('bg-change', { name: bgName });
+
+  // Send current verse if displayed
+  const vcontent = $('vcontent');
+  if (vcontent && vcontent.style.display !== 'none') {
+    vaBroadcast('verse-update', {
+      ref: $('vref').textContent,
+      text: $('vline').textContent,
+      trans: $('vtrans').textContent
+    });
+  }
+
+  // Send timer visibility
+  vaBroadcast('timer-visibility', { visible: timerState.projected });
+  if (timerState.projected) {
+    let state = 'normal';
+    if (timerState.remaining <= 0 && timerState.totalSeconds > 0) state = 'expired';
+    else if (timerState.remaining <= timerState.warnAt && timerState.remaining > 0) state = 'warning';
+    vaBroadcast('timer-update', {
+      label: $('timerLabel').value.trim(),
+      time: formatTimer(timerState.remaining),
+      state
+    });
+  }
+}
+
+function initBroadcastChannel() {
+  _vaChannel = new BroadcastChannel('va-channel');
+  _vaChannel.onmessage = (event) => {
+    if (event.data.type === 'projector-ready') {
+      sendCurrentStateToProjector();
+    }
+  };
+
+  // Open Projector button
+  const projBtn = $('openProjectorBtn');
+  if (projBtn) {
+    projBtn.addEventListener('click', () => {
+      if (window.verseairAPI && window.verseairAPI.openProjector) {
+        window.verseairAPI.openProjector();
+      } else {
+        // Browser fallback — open in new window
+        window.open('/projector.html', 'verseair-projector', 'width=1280,height=720');
+      }
+    });
+  }
 }
 
 (async function startup() {
@@ -5463,6 +5556,9 @@ function initLowerThirds() {
   initBackgrounds();
   initTimer();
   initLowerThirds();
+
+  // Stage 2: Multi-screen
+  initBroadcastChannel();
 })();
 </script>
 <!-- Electron hot-update notification -->

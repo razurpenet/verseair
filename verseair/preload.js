@@ -20,5 +20,8 @@ contextBridge.exposeInMainWorld('verseairAPI', {
   setSpeechConfig: (key, region) => ipcRenderer.invoke('set-speech-config', key, region),
 
   // Check if speech credentials exist
-  hasSpeechConfig: () => ipcRenderer.invoke('has-speech-config')
+  hasSpeechConfig: () => ipcRenderer.invoke('has-speech-config'),
+
+  // ── Projector Window ──
+  openProjector: () => ipcRenderer.invoke('open-projector')
 });
