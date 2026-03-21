@@ -5,17 +5,6 @@ const https = require('https');
 const http = require('http');
 const crypto = require('crypto');
 
-// ── LOAD .env FILE ──
-const envPath = path.join(__dirname, '.env');
-if (fs.existsSync(envPath)) {
-  fs.readFileSync(envPath, 'utf8').split('\n').forEach(line => {
-    const match = line.match(/^\s*([\w.-]+)\s*=\s*(.*)?\s*$/);
-    if (match && !process.env[match[1]]) {
-      process.env[match[1]] = (match[2] || '').replace(/^['"]|['"]$/g, '');
-    }
-  });
-}
-
 // ── HOT UPDATE CONFIG ──
 // IMPORTANT: Update these after creating your GitHub repo
 const GITHUB_RAW_BASE = 'https://raw.githubusercontent.com/razurpenet/verseair/master/verseair';
@@ -24,8 +13,8 @@ const HTML_URL = `${GITHUB_RAW_BASE}/bible-verse-projector_6.html`;
 const UPDATE_CHECK_DELAY = 3000; // 3 seconds after window loads
 
 // ── SPEECH RECOGNITION ──
-// Vosk offline engine is loaded via polyfill in the renderer.
-// These Chromium flags are kept as fallback if Vosk fails to load.
+// Azure Cognitive Services Speech SDK provides real-time streaming
+// speech recognition. API key stored securely in app userData.
 app.commandLine.appendSwitch('enable-speech-input');
 app.commandLine.appendSwitch('enable-features', 'WebSpeechAPI');
 
@@ -67,8 +56,12 @@ function createMenu() {
       submenu: [
         { label: 'About VerseAir', click: () => {
           const { dialog } = require('electron');
+          const aboutIcon = nativeImage.createFromPath(
+            path.join(__dirname, 'assets', 'verseair_icon_transparent.png')
+          ).resize({ width: 64, height: 64 });
           dialog.showMessageBox(mainWindow, {
             type: 'info',
+            icon: aboutIcon,
             title: 'About VerseAir',
             message: 'VerseAir',
             detail: 'AI-powered Bible verse projection for churches.\n\nVersion 1.0.0'
@@ -84,7 +77,7 @@ function createMenu() {
 
 function createTray() {
   const iconPath = path.join(__dirname, 'assets', 'verseair_icon_transparent.png');
-  const trayIcon = nativeImage.createFromPath(iconPath).resize({ width: 32, height: 32 });
+  const trayIcon = nativeImage.createFromPath(iconPath).resize({ width: 48, height: 48 });
   tray = new Tray(trayIcon);
   tray.setToolTip('VerseAir');
 
@@ -150,6 +143,12 @@ function checkForProjector() {
         (webContents, permission, callback) => {
           const allowed = ['media', 'microphone', 'audioCapture'];
           callback(allowed.includes(permission));
+        }
+      );
+      projectorWindow.webContents.session.setPermissionCheckHandler(
+        (webContents, permission) => {
+          const allowed = ['media', 'microphone', 'audioCapture'];
+          return allowed.includes(permission);
         }
       );
     }
@@ -269,6 +268,32 @@ ipcMain.handle('get-update-status', () => {
   return { available: fs.existsSync(updateHtml) };
 });
 
+// ── AZURE SPEECH KEY MANAGEMENT ──
+
+function getSpeechConfigPath() {
+  return path.join(app.getPath('userData'), 'speech-config.json');
+}
+
+ipcMain.handle('get-speech-config', () => {
+  const configPath = getSpeechConfigPath();
+  if (!fs.existsSync(configPath)) return null;
+  try {
+    return JSON.parse(fs.readFileSync(configPath, 'utf8'));
+  } catch {
+    return null;
+  }
+});
+
+ipcMain.handle('set-speech-config', (event, key, region) => {
+  const configPath = getSpeechConfigPath();
+  fs.writeFileSync(configPath, JSON.stringify({ key, region }), 'utf8');
+  return true;
+});
+
+ipcMain.handle('has-speech-config', () => {
+  return fs.existsSync(getSpeechConfigPath());
+});
+
 // ── LOCAL SERVER ──
 // Serve HTML via localhost so Web Speech API gets a proper origin
 let localServerPort = 0;
@@ -287,7 +312,6 @@ function startLocalServer() {
       '.woff': 'font/woff',
       '.woff2': 'font/woff2',
       '.ttf': 'font/ttf',
-      '.gz': 'application/gzip',
       '.wasm': 'application/wasm'
     };
 
@@ -296,20 +320,21 @@ function startLocalServer() {
       let filePath;
 
       if (reqPath === '/' || reqPath === '/index.html') {
-        // Serve HTML with Vosk polyfill injected
+        // Serve HTML with Azure Speech polyfill injected
         const htmlContent = fs.readFileSync(getHtmlPath(), 'utf8');
-        const voskScripts = `
-<!-- Vosk Offline Speech Recognition -->
-<script src="/vosk-browser/dist/vosk.js"><\/script>
-<script src="/vosk-speech-polyfill.js"><\/script>`;
-        // Inject polyfill scripts right after <head> so they load before app code
-        const injected = htmlContent.replace(/<head([^>]*)>/i, `<head$1>${voskScripts}`);
+        const azureScripts = `
+<!-- Azure Speech SDK (real-time streaming speech recognition) -->
+<script src="/azure-speech-sdk.js"><\/script>
+<script src="/azure-speech-polyfill.js"><\/script>`;
+        // Inject polyfill right after <head> so it loads before app code
+        const injected = htmlContent.replace(/<head([^>]*)>/i, `<head$1>${azureScripts}`);
         res.writeHead(200, { 'Content-Type': 'text/html' });
         res.end(injected);
         return;
-      } else if (reqPath.startsWith('/vosk-browser/')) {
-        // Serve vosk-browser library files from node_modules
-        filePath = path.join(__dirname, 'node_modules', reqPath);
+      } else if (reqPath === '/azure-speech-sdk.js') {
+        // Serve Azure Speech SDK browser bundle from node_modules
+        filePath = path.join(__dirname, 'node_modules', 'microsoft-cognitiveservices-speech-sdk',
+          'distrib', 'browser', 'microsoft.cognitiveservices.speech.sdk.bundle-min.js');
       } else {
         filePath = path.join(__dirname, reqPath);
       }
@@ -372,6 +397,15 @@ function createWindow() {
     (webContents, permission, callback) => {
       const allowed = ['media', 'microphone', 'audioCapture'];
       callback(allowed.includes(permission));
+    }
+  );
+
+  // Auto-approve permission checks (navigator.permissions.query) so Chromium
+  // never reports 'prompt' or 'denied' for mic — prevents browser-style dialogs
+  mainWindow.webContents.session.setPermissionCheckHandler(
+    (webContents, permission) => {
+      const allowed = ['media', 'microphone', 'audioCapture'];
+      return allowed.includes(permission);
     }
   );
 

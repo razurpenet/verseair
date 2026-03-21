@@ -3,15 +3,16 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https://bible-api.com https://api.esv.org https://query.getbible.net https://bolls.life https://api.anthropic.com https://api.allorigins.win https://corsproxy.io https://api.codetabs.com wss://*.speech.microsoft.com wss://*.stt.speech.microsoft.com https://*.speech.microsoft.com https://*.cognitiveservices.azure.com; img-src 'self' data:; frame-ancestors 'none'; base-uri 'self'; form-action 'self';">
 <title>VerseAir — Live Bible Verse Projector</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet"/>
-<script src="https://cdn.jsdelivr.net/npm/flexsearch@0.7.43/dist/flexsearch.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flexsearch@0.7.43/dist/flexsearch.bundle.min.js" integrity="sha384-omGpH0ys9SL6Z7v/u6TzV7YS77iCT53Bjl2W1MCkg58+e3huwjWJgHrpOkumVj1c" crossorigin="anonymous"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#0b0c0f;--panel:#111318;--border:#1e2028;
+  --bg:#0b0c0f;--panel:#111318;--border:#2a2b35;
   --gold:#c9a84c;--gold-light:#e8c97a;--gold-dim:rgba(201,168,76,0.1);
-  --text:#e8e4d8;--muted:#5a5950;--red:#c0392b;--orange:#e67e22;
+  --text:#e8e4d8;--muted:#8a8980;--red:#c0392b;--orange:#e67e22;
   --green:#27ae60;--radius:10px;
 }
 body{background:var(--bg);color:var(--text);font-family:'EB Garamond',Georgia,serif;font-size:16px;min-height:100vh;display:flex;flex-direction:column}
@@ -26,10 +27,11 @@ body{background:var(--bg);color:var(--text);font-family:'EB Garamond',Georgia,se
 
 /* HEADER */
 header{display:flex;align-items:center;justify-content:space-between;padding:14px 26px;border-bottom:1px solid var(--border);background:var(--panel);flex-shrink:0}
-.logo{font-family:'Cinzel',serif;font-size:1.2rem;letter-spacing:0.12em;color:var(--gold);display:flex;align-items:center;gap:9px}
-.logo-sub{font-family:'EB Garamond',serif;font-size:0.7rem;color:var(--muted);letter-spacing:0.16em;text-transform:uppercase;display:block;margin-top:-3px}
+.logo{font-family:'Cinzel',serif;font-size:1.2rem;letter-spacing:0.12em;color:var(--gold);display:flex;align-items:center;gap:10px}
+.logo-img{width:36px;height:36px;object-fit:contain}
+.logo-sub{font-family:'EB Garamond',serif;font-size:0.75rem;color:var(--muted);letter-spacing:0.14em;text-transform:uppercase;display:block;margin-top:-3px}
 .hdr-right{display:flex;align-items:center;gap:10px}
-label.sel-label{color:var(--muted);font-size:0.78rem;letter-spacing:0.04em}
+label.sel-label{color:var(--muted);font-size:0.82rem;letter-spacing:0.04em}
 select{background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'EB Garamond',serif;font-size:0.88rem;padding:6px 10px;border-radius:7px;cursor:pointer;outline:none}
 select:focus{border-color:var(--gold)}
 
@@ -38,7 +40,7 @@ main{flex:1;display:grid;grid-template-columns:340px 1fr 280px;overflow:hidden}
 
 /* LEFT PANEL */
 .left{background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:20px;gap:16px;overflow-y:auto}
-.sec-label{font-family:'Cinzel',serif;font-size:0.6rem;letter-spacing:0.22em;color:var(--muted);text-transform:uppercase;margin-bottom:6px}
+.sec-label{font-family:'Cinzel',serif;font-size:0.7rem;letter-spacing:0.18em;color:var(--muted);text-transform:uppercase;margin-bottom:6px}
 
 /* MIC */
 .mic-area{display:flex;flex-direction:column;align-items:center;gap:12px}
@@ -47,9 +49,11 @@ main{flex:1;display:grid;grid-template-columns:340px 1fr 280px;overflow:hidden}
 .mic-btn:disabled{opacity:0.3;cursor:not-allowed}
 .mic-btn.listening{background:rgba(192,57,43,0.12);border-color:var(--red);animation:pulse 1.5s ease-out infinite}
 @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(192,57,43,0.45)}70%{box-shadow:0 0 0 18px rgba(192,57,43,0)}100%{box-shadow:0 0 0 0 rgba(192,57,43,0)}}
-.mic-status{font-size:0.76rem;color:var(--muted);text-align:center;transition:color 0.2s}
+.mic-status{font-size:0.82rem;color:var(--muted);text-align:center;transition:color 0.2s}
 .mic-status.active{color:var(--red)}
 .mic-status.err{color:var(--orange)}
+.mic-device-select{width:100%;max-width:220px;padding:5px 8px;font-size:0.78rem;font-family:'EB Garamond',Georgia,serif;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;outline:none;transition:border-color 0.2s}
+.mic-device-select:hover,.mic-device-select:focus{border-color:var(--gold)}
 
 /* TRANSCRIPT */
 .transcript-box{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px;min-height:90px;max-height:130px;font-size:0.9rem;line-height:1.6;overflow-y:auto;transition:border-color 0.2s;word-break:break-word}
@@ -58,7 +62,7 @@ main{flex:1;display:grid;grid-template-columns:340px 1fr 280px;overflow:hidden}
 .hlt{background:rgba(201,168,76,0.25);color:var(--gold-light);border-radius:3px;padding:1px 4px;font-style:normal;font-weight:500}
 
 /* DEBUG LOG */
-.debug-box{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:10px;max-height:110px;overflow-y:auto;font-family:monospace;font-size:0.72rem;line-height:1.5}
+.debug-box{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:10px;max-height:110px;overflow-y:auto;font-family:monospace;font-size:0.78rem;line-height:1.5}
 .dl-heard{color:#7fb3d3}
 .dl-detected{color:var(--gold-light)}
 .dl-miss{color:var(--muted)}
@@ -99,29 +103,30 @@ main{flex:1;display:grid;grid-template-columns:340px 1fr 280px;overflow:hidden}
 .grid-hdr{display:flex;align-items:center;gap:6px;margin-bottom:6px}
 .grid-hdr-back{background:none;border:none;color:var(--gold);cursor:pointer;font-size:0.85rem;padding:2px 4px;border-radius:4px;transition:background 0.12s}
 .grid-hdr-back:hover{background:var(--gold-dim)}
-.grid-hdr-label{font-family:'Cinzel',serif;font-size:0.6rem;letter-spacing:0.12em;color:var(--muted);text-transform:uppercase}
+.grid-hdr-label{font-family:'Cinzel',serif;font-size:0.7rem;letter-spacing:0.1em;color:var(--muted);text-transform:uppercase}
 .grid-body{display:grid;grid-template-columns:repeat(auto-fill,minmax(32px,1fr));gap:3px;max-height:120px;overflow-y:auto;padding:2px}
 .grid-cell{width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;background:var(--bg);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:0.75rem;font-family:'Cinzel',serif;cursor:pointer;transition:all 0.12s}
 .grid-cell:hover{border-color:var(--gold);color:var(--gold);background:var(--gold-dim)}
 .grid-cell.sel{background:var(--gold);color:#0b0c0f;border-color:var(--gold);font-weight:700}
-.grid-toggle{background:none;border:1px solid var(--border);color:var(--muted);font-size:0.65rem;font-family:'Cinzel',serif;letter-spacing:0.06em;padding:3px 10px;border-radius:5px;cursor:pointer;margin-top:6px;transition:all 0.12s;width:100%;text-align:center}
+.grid-toggle{background:none;border:1px solid var(--border);color:var(--muted);font-size:0.72rem;font-family:'Cinzel',serif;letter-spacing:0.06em;padding:4px 10px;border-radius:5px;cursor:pointer;margin-top:6px;transition:all 0.12s;width:100%;text-align:center}
 .grid-toggle:hover{border-color:var(--gold);color:var(--gold)}
 
 /* ── VERSE NAV ARROWS ─────────────────────────────────────────────────────── */
-.verse-nav{position:absolute;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;border:1px solid rgba(201,168,76,0.3);background:transparent;color:var(--gold);font-size:1.1rem;cursor:pointer;display:none;align-items:center;justify-content:center;transition:all 0.18s;z-index:10;opacity:0.5}
-.verse-nav:hover{opacity:1;background:var(--gold-dim);border-color:var(--gold);transform:translateY(-50%) scale(1.08)}
+.verse-nav{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;border:1.5px solid rgba(201,168,76,0.4);background:rgba(11,12,15,0.6);color:var(--gold);font-size:1.3rem;line-height:1;cursor:pointer;display:none;align-items:center;justify-content:center;transition:all 0.2s;z-index:10;opacity:0.7;backdrop-filter:blur(4px);-webkit-font-smoothing:antialiased}
+.verse-nav:hover{opacity:1;background:rgba(201,168,76,0.15);border-color:var(--gold);transform:translateY(-50%) scale(1.1);box-shadow:0 0 12px rgba(201,168,76,0.2)}
+.verse-nav:active{transform:translateY(-50%) scale(0.95)}
 .verse-nav.show{display:flex}
-.verse-nav.left{left:20px}
-.verse-nav.right{right:20px}
+.verse-nav.left{left:16px}
+.verse-nav.right{right:16px}
 @keyframes vnavShake{0%,100%{transform:translateY(-50%) translateX(0)}25%{transform:translateY(-50%) translateX(-4px)}75%{transform:translateY(-50%) translateX(4px)}}
 .verse-nav.shake{animation:vnavShake 0.3s ease}
 
 /* HISTORY */
 .hist{display:flex;flex-direction:column;gap:5px;overflow-y:auto;max-height:160px}
-.hist-item{background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:6px 11px;font-size:0.78rem;cursor:pointer;transition:all 0.18s;display:flex;justify-content:space-between;align-items:center}
+.hist-item{background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:7px 11px;font-size:0.82rem;cursor:pointer;transition:all 0.18s;display:flex;justify-content:space-between;align-items:center}
 .hist-item:hover{border-color:var(--gold);background:var(--gold-dim)}
-.hist-ref{font-family:'Cinzel',serif;color:var(--gold);font-size:0.74rem}
-.hist-t{color:var(--muted);font-size:0.68rem}
+.hist-ref{font-family:'Cinzel',serif;color:var(--gold);font-size:0.78rem}
+.hist-t{color:var(--muted);font-size:0.72rem}
 .hist-empty{color:var(--muted);font-size:0.8rem;font-style:italic}
 
 /* RIGHT — VERSE DISPLAY */
@@ -135,16 +140,16 @@ main{flex:1;display:grid;grid-template-columns:340px 1fr 280px;overflow:hidden}
 .vdiv.show{opacity:1}
 .vline{font-size:clamp(1.45rem,2.8vw,2.4rem);line-height:1.55;font-weight:400;color:var(--text);font-style:italic;opacity:0;transform:translateY(10px);transition:opacity .28s .06s,transform .28s .06s}
 .vline.show{opacity:1;transform:translateY(0)}
-.vtrans{margin-top:20px;font-size:.7rem;letter-spacing:.2em;color:var(--muted);text-transform:uppercase;font-family:'Cinzel',serif;opacity:0;transition:opacity .22s .14s}
+.vtrans{margin-top:20px;font-size:.75rem;letter-spacing:.18em;color:var(--muted);text-transform:uppercase;font-family:'Cinzel',serif;opacity:0;transition:opacity .22s .14s}
 .vtrans.show{opacity:1}
 .empty-state{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:11px;z-index:1;transition:opacity .4s;pointer-events:none}
 .empty-state.hidden{opacity:0}
 .ei{font-size:2.8rem;opacity:.1}
-.et{font-family:'Cinzel',serif;font-size:.7rem;letter-spacing:.2em;color:var(--muted);text-transform:uppercase}
+.et{font-family:'Cinzel',serif;font-size:.78rem;letter-spacing:.16em;color:var(--muted);text-transform:uppercase}
 .spinner{width:24px;height:24px;border:2px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;display:none;position:absolute;z-index:2}
 @keyframes spin{to{transform:rotate(360deg)}}
 .errmsg{color:var(--orange);font-size:.85rem;text-align:center;display:none;font-style:italic;max-width:420px;z-index:2;padding:0 20px;line-height:1.5}
-.fs-btn{position:absolute;bottom:22px;right:22px;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:7px;padding:6px 12px;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;cursor:pointer;transition:all .2s;z-index:10}
+.fs-btn{position:absolute;bottom:22px;right:22px;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:7px;padding:6px 12px;font-family:'Cinzel',serif;font-size:.7rem;letter-spacing:.1em;cursor:pointer;transition:all .2s;z-index:10}
 .fs-btn:hover{border-color:var(--gold);color:var(--gold)}
 
 /* TRANSLATION TOAST */
@@ -161,7 +166,7 @@ main{flex:1;display:grid;grid-template-columns:340px 1fr 280px;overflow:hidden}
 ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
 
 /* OFFLINE / ONLINE BADGE */
-.net-badge{display:flex;align-items:center;gap:6px;border-radius:20px;padding:4px 11px 4px 8px;font-family:'Cinzel',serif;font-size:0.58rem;letter-spacing:0.1em;text-transform:uppercase;border:1px solid;transition:all 0.5s;white-space:nowrap}
+.net-badge{display:flex;align-items:center;gap:6px;border-radius:20px;padding:4px 11px 4px 8px;font-family:'Cinzel',serif;font-size:0.68rem;letter-spacing:0.08em;text-transform:uppercase;border:1px solid;transition:all 0.5s;white-space:nowrap}
 .net-badge.online{border-color:rgba(39,174,96,0.35);color:#2ecc71;background:rgba(39,174,96,0.07)}
 .net-badge.offline{border-color:rgba(192,57,43,0.5);color:#e74c3c;background:rgba(192,57,43,0.09);animation:offpulse 2.5s ease-in-out infinite}
 @keyframes offpulse{0%,100%{opacity:1}50%{opacity:0.55}}
@@ -173,13 +178,13 @@ main{flex:1;display:grid;grid-template-columns:340px 1fr 280px;overflow:hidden}
 .speech-offline-warn.show{display:block}
 
 /* CACHE STATS ROW */
-.cache-row{display:flex;align-items:center;justify-content:space-between;font-size:0.68rem;color:var(--muted);padding:2px 0}
+.cache-row{display:flex;align-items:center;justify-content:space-between;font-size:0.74rem;color:var(--muted);padding:2px 0}
 .cache-row span{font-family:'Cinzel',serif;letter-spacing:0.06em}
-.cache-clear-btn{background:none;border:none;color:var(--muted);font-size:0.62rem;cursor:pointer;font-family:'Cinzel',serif;letter-spacing:0.06em;padding:2px 4px;border-radius:4px;transition:color 0.18s}
+.cache-clear-btn{background:none;border:none;color:var(--muted);font-size:0.7rem;cursor:pointer;font-family:'Cinzel',serif;letter-spacing:0.06em;padding:2px 4px;border-radius:4px;transition:color 0.18s}
 .cache-clear-btn:hover{color:var(--red)}
 
 /* ── SERMON SUMMARY BUTTON ── */
-.summary-btn{width:100%;background:linear-gradient(135deg,rgba(201,168,76,0.15),rgba(201,168,76,0.08));border:1px solid rgba(201,168,76,0.4);color:var(--gold-light);border-radius:9px;padding:11px 14px;font-family:'Cinzel',serif;font-size:0.68rem;letter-spacing:0.1em;cursor:pointer;transition:all 0.22s;display:flex;align-items:center;justify-content:center;gap:8px}
+.summary-btn{width:100%;background:linear-gradient(135deg,rgba(201,168,76,0.15),rgba(201,168,76,0.08));border:1px solid rgba(201,168,76,0.4);color:var(--gold-light);border-radius:9px;padding:11px 14px;font-family:'Cinzel',serif;font-size:0.75rem;letter-spacing:0.08em;cursor:pointer;transition:all 0.22s;display:flex;align-items:center;justify-content:center;gap:8px}
 .summary-btn:hover{background:linear-gradient(135deg,rgba(201,168,76,0.28),rgba(201,168,76,0.15));border-color:var(--gold);transform:translateY(-1px);box-shadow:0 4px 20px rgba(201,168,76,0.15)}
 .summary-btn:disabled{opacity:0.35;cursor:not-allowed;transform:none}
 .summary-btn-icon{font-size:1rem}
@@ -195,7 +200,7 @@ main{flex:1;display:grid;grid-template-columns:340px 1fr 280px;overflow:hidden}
 .modal-overlay.open .modal-box{transform:translateY(0)}
 .modal-title{font-family:'Cinzel',serif;font-size:0.88rem;letter-spacing:0.18em;color:var(--gold);text-transform:uppercase;margin-bottom:18px;display:flex;align-items:center;gap:9px}
 .modal-field{margin-bottom:14px}
-.modal-field label{display:block;font-family:'Cinzel',serif;font-size:0.58rem;letter-spacing:0.18em;color:var(--muted);text-transform:uppercase;margin-bottom:6px}
+.modal-field label{display:block;font-family:'Cinzel',serif;font-size:0.68rem;letter-spacing:0.14em;color:var(--muted);text-transform:uppercase;margin-bottom:6px}
 .modal-field input,.modal-field textarea{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'EB Garamond',serif;font-size:0.92rem;padding:9px 12px;border-radius:7px;outline:none;transition:border-color 0.2s;resize:none}
 .modal-field input:focus,.modal-field textarea:focus{border-color:var(--gold)}
 .modal-field .field-hint{font-size:0.72rem;color:var(--muted);margin-top:4px;line-height:1.4}
@@ -339,13 +344,13 @@ main{flex:1;display:grid;grid-template-columns:340px 1fr 280px;overflow:hidden}
   display:flex;flex-direction:column;overflow-y:auto;
 }
 .ctx-panel-hdr{
-  font-family:'Cinzel',serif;font-size:0.58rem;letter-spacing:0.18em;
+  font-family:'Cinzel',serif;font-size:0.7rem;letter-spacing:0.14em;
   color:var(--muted);text-transform:uppercase;
   padding:14px 14px 8px;display:flex;align-items:center;gap:6px;
   border-bottom:1px solid var(--border);flex-shrink:0;
 }
 .ctx-panel-hdr .ctx-status{
-  margin-left:auto;font-family:'EB Garamond',serif;font-size:0.68rem;
+  margin-left:auto;font-family:'EB Garamond',serif;font-size:0.74rem;
   letter-spacing:0;text-transform:none;color:var(--muted);font-style:italic;
 }
 .ctx-list{flex:1;display:flex;flex-direction:column;gap:1px;overflow-y:auto;padding:6px}
@@ -362,32 +367,32 @@ main{flex:1;display:grid;grid-template-columns:340px 1fr 280px;overflow:hidden}
 .ctx-card.active{border-color:var(--gold);background:rgba(201,168,76,0.12)}
 .ctx-card-top{display:flex;align-items:center;justify-content:space-between;gap:6px}
 .ctx-card-ref{
-  font-family:'Cinzel',serif;font-size:0.7rem;letter-spacing:0.06em;
+  font-family:'Cinzel',serif;font-size:0.76rem;letter-spacing:0.06em;
   color:var(--gold);
 }
 .ctx-card-conf{
-  font-family:'Cinzel',serif;font-size:0.58rem;letter-spacing:0.04em;
+  font-family:'Cinzel',serif;font-size:0.68rem;letter-spacing:0.04em;
   color:var(--muted);
 }
 .ctx-card-preview{
-  font-size:0.72rem;color:var(--muted);line-height:1.4;
+  font-size:0.78rem;color:var(--text);line-height:1.4;opacity:0.75;
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
 }
 .ctx-card-tier{
-  font-family:'Cinzel',serif;font-size:0.48rem;letter-spacing:0.1em;
-  color:var(--muted);text-transform:uppercase;opacity:0.6;
+  font-family:'Cinzel',serif;font-size:0.6rem;letter-spacing:0.08em;
+  color:var(--muted);text-transform:uppercase;opacity:0.7;
 }
 .ctx-heard{
   background:var(--bg);border:1px solid var(--border);border-radius:6px;
   padding:8px 12px;margin:0 6px;flex-shrink:0;
 }
 .ctx-heard-label{
-  font-family:'Cinzel',serif;font-size:0.5rem;letter-spacing:0.14em;
+  font-family:'Cinzel',serif;font-size:0.62rem;letter-spacing:0.12em;
   color:var(--muted);text-transform:uppercase;margin-bottom:4px;
 }
 .ctx-heard-text{
-  font-size:0.72rem;color:var(--text);line-height:1.4;
-  font-style:italic;opacity:0.7;max-height:36px;overflow:hidden;
+  font-size:0.78rem;color:var(--text);line-height:1.4;
+  font-style:italic;opacity:0.8;max-height:36px;overflow:hidden;
 }
 </style>
 </head>
@@ -402,7 +407,7 @@ main{flex:1;display:grid;grid-template-columns:340px 1fr 280px;overflow:hidden}
 </div>
 
 <header>
-  <div class="logo"><span>✦</span><div>VerseAir<span class="logo-sub">Live Bible Verse Projector</span></div></div>
+  <div class="logo"><img src="assets/verseair_icon_transparent.png" alt="VerseAir" class="logo-img"><div>VerseAir<span class="logo-sub">Live Bible Verse Projector</span></div></div>
   <div class="hdr-right">
     <button class="settings-icon-btn" id="settingsBtn" title="AI Settings — API Key">⚙</button>
     <div class="net-badge online" id="netBadge" title="Offline verses cached: loading…">
@@ -417,7 +422,7 @@ main{flex:1;display:grid;grid-template-columns:340px 1fr 280px;overflow:hidden}
         <option value="KJV">KJV — King James Version</option>
         <option value="NLT">NLT — New Living Translation</option>
         <option value="ESV">ESV — English Standard Version</option>
-        <option value="NKJV">NKJV — New King James Version</option>
+        <option value="NKJV" selected>NKJV — New King James Version</option>
         <option value="NASB">NASB — New American Standard</option>
         <option value="AMP">AMP — Amplified Bible</option>
         <option value="MSG">MSG — The Message</option>
@@ -444,6 +449,9 @@ main{flex:1;display:grid;grid-template-columns:340px 1fr 280px;overflow:hidden}
     <div class="mic-area">
       <button class="mic-btn" id="micBtn"><span id="micIcon">🎙️</span></button>
       <div class="mic-status" id="micStatus">Click to start listening</div>
+      <select class="mic-device-select" id="micDeviceSelect" title="Choose audio input device">
+        <option value="">Default microphone</option>
+      </select>
     </div>
 
     <div class="speech-offline-warn" id="speechOfflineWarn">
@@ -507,8 +515,8 @@ main{flex:1;display:grid;grid-template-columns:340px 1fr 280px;overflow:hidden}
     <div class="empty-state" id="emptyState"><div class="ei">✦</div><div class="et">Awaiting a Bible verse…</div></div>
     <div class="spinner" id="spinner"></div>
     <div class="errmsg" id="errmsg"></div>
-    <button class="verse-nav left" id="vnavPrev" title="Previous verse">←</button>
-    <button class="verse-nav right" id="vnavNext" title="Next verse">→</button>
+    <button class="verse-nav left" id="vnavPrev" title="Previous verse">&#10094;</button>
+    <button class="verse-nav right" id="vnavNext" title="Next verse">&#10095;</button>
     <div class="verse-content" id="vcontent" style="display:none">
       <div class="vref" id="vref"></div>
       <div class="vdiv" id="vdiv"></div>
@@ -657,6 +665,11 @@ main{flex:1;display:grid;grid-template-columns:340px 1fr 280px;overflow:hidden}
 
 // DOM helper — must be declared FIRST before any code references it
 const $ = id => document.getElementById(id);
+
+// Global HTML escaper — prevents XSS when inserting untrusted text into innerHTML
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 1. NUMBER-WORD → DIGIT CONVERTER
@@ -855,6 +868,7 @@ const BOOK_MAP = {
   // Numbers
   'numbers':'Numbers','num':'Numbers','nm':'Numbers','nb':'Numbers',
   'number':'Numbers',  // SR drops trailing S
+  'nombas':'Numbers',  // Nigerian Pidgin
   // Deuteronomy — many common misspellings because it has 5 syllables
   'deuteronomy':'Deuteronomy','deut':'Deuteronomy','deu':'Deuteronomy','dt':'Deuteronomy',
   'deutronomy':'Deuteronomy','deuteronamy':'Deuteronomy','duteronomy':'Deuteronomy',
@@ -872,11 +886,13 @@ const BOOK_MAP = {
   '2 samuel':'2 Samuel','2samuel':'2 Samuel','second samuel':'2 Samuel',
   '2sam':'2 Samuel','2sm':'2 Samuel','2sa':'2 Samuel','2s':'2 Samuel',
   'samuel':'1 Samuel','sm':'1 Samuel',
+  'one samuel':'1 Samuel','two samuel':'2 Samuel',  // word-number prefix (Nigerian style)
   // Kings
   '1 kings':'1 Kings','1kings':'1 Kings','first kings':'1 Kings',
   '1ki':'1 Kings','1kg':'1 Kings','1kgs':'1 Kings',
   '2 kings':'2 Kings','2kings':'2 Kings','second kings':'2 Kings',
   '2ki':'2 Kings','2kg':'2 Kings','2kgs':'2 Kings',
+  'one kings':'1 Kings','two kings':'2 Kings',  // word-number prefix (Nigerian style)
   // Chronicles
   '1 chronicles':'1 Chronicles','first chronicles':'1 Chronicles',
   '1chr':'1 Chronicles','1ch':'1 Chronicles','1chron':'1 Chronicles',
@@ -885,6 +901,7 @@ const BOOK_MAP = {
   '2chr':'2 Chronicles','2ch':'2 Chronicles','2chron':'2 Chronicles',
   '2 kronika':'2 Chronicles','second kronika':'2 Chronicles',  // Yoruba transliteration
   'kronika':'1 Chronicles',  // bare Yoruba form → default 1 Chronicles
+  'one chronicles':'1 Chronicles','two chronicles':'2 Chronicles',  // word-number prefix
   // Ezra–Esther
   'ezra':'Ezra','ezr':'Ezra','ez':'Ezra',
   'nehemiah':'Nehemiah','neh':'Nehemiah','ne':'Nehemiah','nehemia':'Nehemiah',
@@ -962,16 +979,20 @@ const BOOK_MAP = {
   'matteu':'Matthew','matiu':'Matthew','mattiu':'Matthew',  // Yoruba/Igbo transliteration
   'gospel of matthew':'Matthew','the gospel of matthew':'Matthew',
   'gospel according to matthew':'Matthew','the gospel according to matthew':'Matthew',
+  'saint matthew':'Matthew','st matthew':'Matthew','st. matthew':'Matthew',  // Catholic/liturgical
   'mark':'Mark','mk':'Mark','mr':'Mark',
   'marku':'Mark',  // Yoruba transliteration
   'gospel of mark':'Mark','the gospel of mark':'Mark',
   'gospel according to mark':'Mark','the gospel according to mark':'Mark',
+  'saint mark':'Mark','st mark':'Mark','st. mark':'Mark',  // Catholic/liturgical
   'luke':'Luke','look':'Luke','lk':'Luke','lc':'Luke','luku':'Luke',  // Yoruba transliteration
   'gospel of luke':'Luke','the gospel of luke':'Luke',
   'gospel according to luke':'Luke','the gospel according to luke':'Luke',
+  'saint luke':'Luke','st luke':'Luke','st. luke':'Luke',  // Catholic/liturgical
   'john':'John','jn':'John','joh':'John','johannu':'John',  // Yoruba transliteration
   'gospel of john':'John','the gospel of john':'John',
   'gospel according to john':'John','the gospel according to john':'John',
+  'saint john':'John','st john':'John','st. john':'John',  // Catholic/liturgical
   // Acts
   'acts':'Acts','act':'Acts','ac':'Acts',
   'acts of the apostles':'Acts','the acts of the apostles':'Acts',
@@ -993,6 +1014,8 @@ const BOOK_MAP = {
   'korinti':'1 Corinthians','korint':'1 Corinthians',  // Yoruba/Igbo transliteration
   '1 korinti':'1 Corinthians','first korinti':'1 Corinthians',
   '2 korinti':'2 Corinthians','second korinti':'2 Corinthians',
+  'korintians':'1 Corinthians',  // Nigerian Pidgin
+  'one corinthians':'1 Corinthians','two corinthians':'2 Corinthians',  // word-number prefix
   'galatians':'Galatians','gal':'Galatians','ga':'Galatians',
   'galation':'Galatians','gallatians':'Galatians','gallation':'Galatians', // SR garbles
   'galatia':'Galatians',  // Yoruba transliteration
@@ -1023,6 +1046,7 @@ const BOOK_MAP = {
   '1 tesalonika':'1 Thessalonians','first tesalonika':'1 Thessalonians',
   '2 tesalonika':'2 Thessalonians','second tesalonika':'2 Thessalonians',
   '1 tessalonians':'1 Thessalonians','2 tessalonians':'2 Thessalonians',  // th→t with numbers
+  'one thessalonians':'1 Thessalonians','two thessalonians':'2 Thessalonians',  // word-number prefix
   '1 timothy':'1 Timothy','first timothy':'1 Timothy',
   '1tim':'1 Timothy','1ti':'1 Timothy','1tm':'1 Timothy',
   '2 timothy':'2 Timothy','second timothy':'2 Timothy',
@@ -1032,6 +1056,7 @@ const BOOK_MAP = {
   'timotiu':'1 Timothy','timoti':'1 Timothy',  // Yoruba/Igbo transliteration
   '1 timotiu':'1 Timothy','first timotiu':'1 Timothy',
   '2 timotiu':'2 Timothy','second timotiu':'2 Timothy',
+  'one timothy':'1 Timothy','two timothy':'2 Timothy',  // word-number prefix
   'titus':'Titus','tt':'Titus','tit':'Titus','titu':'Titus','taitos':'Titus',  // Yoruba/Igbo
   'philemon':'Philemon','phm':'Philemon','phlm':'Philemon','pm':'Philemon',
   'philem':'Philemon',                   // MLA abbreviation
@@ -1049,6 +1074,7 @@ const BOOK_MAP = {
   '2 peter':'2 Peter','second peter':'2 Peter',
   '2pet':'2 Peter','2pe':'2 Peter','2pt':'2 Peter',
   '2 peteru':'2 Peter','second peteru':'2 Peter','2 pita':'2 Peter','second pita':'2 Peter',
+  'one peter':'1 Peter','two peter':'2 Peter',  // word-number prefix
   // Johns
   '1 john':'1 John','first john':'1 John',
   '1jn':'1 John','1joh':'1 John','1jo':'1 John',
@@ -1056,6 +1082,7 @@ const BOOK_MAP = {
   '2jn':'2 John','2joh':'2 John','2jo':'2 John',
   '3 john':'3 John','third john':'3 John',
   '3jn':'3 John','3joh':'3 John','3jo':'3 John',
+  'one john':'1 John','two john':'2 John','three john':'3 John',  // word-number prefix
   'jude':'Jude','jd':'Jude','jud':'Jude',
   'jood':'Jude','jute':'Jude',  // SR accent / mishearing
   'juda':'Jude',  // Yoruba transliteration
@@ -1069,6 +1096,7 @@ const BOOK_MAP = {
   'the revelation of jesus christ':'Revelation',
   'ifihan':'Revelation',  // Yoruba transliteration ("Disclosure")
   'refelation':'Revelation','refeleshon':'Revelation',  // Nigerian v→f accent
+  'revelashon':'Revelation',  // Nigerian Pidgin
   'revolution':'Revelation',  // Common Nigerian STT mishearing
 };
 
@@ -1119,8 +1147,9 @@ const AMBIGUOUS_BOOKS = new Set([
 const PATTERNS = [
   // Priority 1a: "John chapter 3 verse 16" / "John ch 3 v 16"
   //              "John chapter 3 and verse 16" (optional "and")
+  //              "John chapter 3 from verse 16" (Nigerian "from verse" style)
   //              "John in chapter 3 verse 16" / "John at chapter 3 verse 16"
-  new RegExp(`(${BOOK_PATTERN})\\s+(?:(?:in|at)\\s+)?(?:chapter\\s+|ch\\.?\\s*)?(\\d{1,3})\\s+(?:and\\s+)?(?:verse\\s+|verses?\\s+|v\\.?\\s*)(\\d{1,3})`, 'gi'),
+  new RegExp(`(${BOOK_PATTERN})\\s+(?:(?:in|at)\\s+)?(?:chapter\\s+|ch\\.?\\s*)?(\\d{1,3})\\s+(?:(?:and|from)\\s+)?(?:verse\\s+|verses?\\s+|v\\.?\\s*)(\\d{1,3})`, 'gi'),
   // Priority 1b: INVERTED ordinal — "John 3 chapter 16 verse"
   new RegExp(`(${BOOK_PATTERN})\\s+(\\d{1,3})\\s+chapter\\s+(\\d{1,3})\\s+verse`, 'gi'),
   // Priority 2a: "John 3:16" (colon-separated — canonical written form)
@@ -1132,6 +1161,24 @@ const PATTERNS = [
   // Priority 3: "John 3 16" (bare space-separated digits)
   new RegExp(`(${BOOK_PATTERN})\\s+(\\d{1,3})\\s+(\\d{1,3})(?!\\s*\\d)`, 'gi'),
 ];
+
+// ── Azure / cloud speech normalisation regexes ───────────────────────────────
+// Created once here (not inside hot functions) since BOOK_PATTERN is large.
+
+// Splits merged chapter:verse digits after a book name:
+//   "John 316"      → "John 3:16"
+//   "Romans 828"    → "Romans 8:28"
+//   "Psalm 11928"   → "Psalm 119:28"
+const MERGED_NUM_RE = new RegExp(
+  `((?:${BOOK_PATTERN})\\s+)(\\d{3,5})\\b`, 'gi'
+);
+
+// Inserts colon between two adjacent bare digits after a book name:
+//   "John 3 16"    → "John 3:16"   (critical for AMBIGUOUS_BOOKS like John)
+//   "Romans 8 28"  → "Romans 8:28"
+const COLON_INSERT_RE = new RegExp(
+  `((?:${BOOK_PATTERN})\\s+)(\\d{1,3})\\s+(\\d{1,3})(?!\\s*\\d)`, 'gi'
+);
 
 // ── Pre-normaliser — runs on RAW text BEFORE wordsToDigits ───────────────────
 // Strips preacher preamble phrases and normalises non-standard separators.
@@ -1145,8 +1192,56 @@ const PATTERNS = [
 //   "our key verse today is John 3:16"   → "John 3:16"
 //   "the twenty-third psalm verse 4"     → "psalms 23 verse 4"
 //   "John 3.16"                          → "John 3:16"
+//   "John 316"                           → "John 3:16"   (Azure merged)
+//   "John 3 16"                          → "John 3:16"   (Azure spaced)
 function preNormalise(raw) {
   let t = raw.trim();
+
+  // ── A-1. Cloud speech normalization (Azure / Whisper) ─────────────────────
+  // Cloud speech engines output differently from Google's Web Speech API:
+  //   - Add sentence punctuation (periods, commas, question marks)
+  //   - May merge numbers: "316" instead of "3:16" or "3 16"
+  //   - May output "3 colon 16" for spoken punctuation
+  //   - May add filler words, metadata tags, or hallucination text
+
+  // Strip trailing sentence punctuation
+  t = t.replace(/[.!?;]+$/g, '');
+
+  // Remove commas not between digits ("John, Chapter 3, Verse 16" → "John Chapter 3 Verse 16")
+  t = t.replace(/(\D),\s*/g, '$1 ');
+  t = t.replace(/,(\D)/g, ' $1');
+
+  // "3 colon 16" / "3 column 16" → "3:16" (spoken punctuation)
+  t = t.replace(/\b(\d{1,3})\s+(?:colon|column)\s+(\d{1,3})\b/gi, '$1:$2');
+
+  // "11/3" → "11:3" (Azure sometimes uses slash as separator)
+  t = t.replace(/(\d)\s*\/\s*(\d)/g, '$1:$2');
+
+  // Strip metadata/hallucination artifacts
+  t = t.replace(/\[.*?\]/g, '');
+  t = t.replace(/\(.*?\)/g, '');
+
+  // Strip filler words that speech engines may include
+  t = t.replace(/\b(?:um|uh|ah|hmm|erm|er|like)\b/gi, '');
+
+  // Split merged chapter:verse numbers after book names
+  // Azure outputs "John 316" or "Romans 828" — no separator between chapter/verse
+  MERGED_NUM_RE.lastIndex = 0;
+  t = t.replace(MERGED_NUM_RE, (_, prefix, num) => {
+    if (num.length === 3) return `${prefix}${num[0]}:${num.slice(1)}`;            // "316" → "3:16"
+    if (num.length === 4) {
+      const ch2 = parseInt(num.slice(0, 2));
+      return ch2 <= 50 ? `${prefix}${num.slice(0,2)}:${num.slice(2)}`             // "1028" → "10:28"
+                       : `${prefix}${num[0]}:${num.slice(1)}`;                    // "8281" → "8:281" (unlikely)
+    }
+    if (num.length === 5) return `${prefix}${num.slice(0,3)}:${num.slice(3)}`;    // "11928" → "119:28"
+    return `${prefix}${num}`;
+  });
+
+  // Insert colon between adjacent bare digits after book name
+  // "John 3 16" → "John 3:16" (critical: Pattern 6 is disabled for ambiguous books)
+  COLON_INSERT_RE.lastIndex = 0;
+  t = t.replace(COLON_INSERT_RE, '$1$2:$3');
 
   // ── A0. Nigerian accent normalization ─────────────────────────────────────
   // Runs BEFORE preamble stripping so keywords like "chapta" in preambles are normalised.
@@ -1159,12 +1254,26 @@ function preNormalise(raw) {
   t = t.replace(/\bchapt(?:a|r)\b/gi, 'chapter');
   // "ferse" / "fess" / "vess" → "verse" (Nigerian v→f accent / cluster simplification)
   t = t.replace(/\b(?:ferse|fess|vess)\b/gi, 'verse');
-  // "firs" → "first", "secon" → "second" (final consonant dropping)
-  t = t.replace(/\bfirs\b/gi, 'first');
+  // "firs" / "fos" / "fus" → "first", "secon" → "second" (final consonant dropping)
+  t = t.replace(/\b(?:firs|fos|fus)\b/gi, 'first');
   t = t.replace(/\bsecon\b/gi, 'second');
+  // "tird" / "turd" → "third" (th→t)
+  t = t.replace(/\b(?:tird|turd)\b/gi, 'third');
+  // "fourt" / "fort" → "fourth", "fif" / "fift" → "fifth" (th→t + cluster reduction)
+  t = t.replace(/\b(?:fourt|fort)\b/gi, 'fourth');
+  t = t.replace(/\b(?:fift?)\b/gi, 'fifth');
+  // "sixt" → "sixth", "sevent" → "seventh" (th→t)
+  t = t.replace(/\bsixt\b/gi, 'sixth');
+  t = t.replace(/\bsevent\b/gi, 'seventh');
+  // "numbas" → "numbers" (Nigerian -er→-a)
+  t = t.replace(/\bnumbas\b/gi, 'numbers');
+  // "buk" → "book" (Nigerian vowel shortening)
+  t = t.replace(/\bbuk\b/gi, 'book');
+  // "di" → "the" in Pidgin context ("di book of", "di Bible")
+  t = t.replace(/\bdi\s+(?=book\b|bible\b|word\b|scripture\b)/gi, 'the ');
   // "de" → "the" only in "de book of" pattern (handled in preambles below)
   // Strip trailing congregation engagement phrases after reference
-  t = t.replace(/\s+(?:are\s+you\s+there|somebody\s+say\s+amen|can\s+i\s+(?:hear\s+an?\s+)?amen|say\s+amen|hallelujah|praise\s+(?:the|de)\s+lord|glory\s+to\s+god|amen)\s*$/i, '');
+  t = t.replace(/\s+(?:are\s+you\s+there|is\s+(?:there\s+)?anybody\s+(?:there|here)|are\s+you\s+(?:following|with)\s+me|do\s+you\s+see\s+that|did\s+you\s+see\s+that|you\s+are\s+getting\s+it|somebody\s+(?:say|shout)\s+(?:amen|hallelujah|glory)|can\s+(?:i|somebody)\s+(?:hear\s+an?\s+)?amen|can\s+somebody\s+say\s+amen|say\s+amen|hallelujah|praise\s+(?:the|de)\s+lord|praise\s+god|glory\s+to\s+god|glory|(?:holy\s+ghost\s+)?fire|in\s+(?:the\s+name\s+of\s+)?jesus(?:\s+name)?|god\s+is\s+good|i(?:'m|\s+am)\s+talking\s+to\s+somebody|receive\s+it(?:\s+in\s+jesus\s+name)?|amen)\s*$/i, '');
 
   // ── A. Preacher preamble stripping ───────────────────────────────────────
   // Order matters: longer / more specific patterns first.
@@ -1221,24 +1330,71 @@ function preNormalise(raw) {
     //   is NOT in the map. Strip and leave the book name.
     /^(?:found\s+)?in\s+the\s+book\s+of\s+/i,
     // ── Nigerian pastor preambles ──────────────────────────────────────────
-    // "the Bible says in" / "the Word of God says in"
-    /^(?:the\s+)?(?:bible|word\s+of\s+god|scripture)\s+(?:says?|tells?\s+us)\s+in\s+/i,
-    // "the Bible records in" / "it is recorded in"
-    /^(?:the\s+bible\s+|it\s+(?:is\s+)?)?record(?:s|ed)\s+(?:in|that)\s+/i,
-    // "can I read from" / "can we read"
-    /^can\s+(?:i|we)\s+read\s+(?:from\s+)?/i,
+    // "the Bible says in" / "the Word of God says in" / "the Word says"
+    /^(?:the\s+)?(?:bible|word\s+of\s+god|word|scripture)\s+(?:says?|tells?\s+us)\s+(?:in\s+)?/i,
+    // "the Bible said (that) in" / "the Bible said" (past tense — very common Nigerian English)
+    /^(?:the\s+)?(?:bible|word\s+of\s+god|word|scripture)\s+(?:said|told\s+us)\s+(?:that\s+)?(?:in\s+)?/i,
+    // "the Bible records in" / "it is recorded in" / "the Bible makes us know"
+    /^(?:the\s+bible\s+|it\s+(?:is\s+)?)?(?:record(?:s|ed)|makes?\s+us\s+know)\s+(?:in|that)\s+/i,
+    // "it is written (in)" / "it is written" (KJV-style — Adeboye, Enenche)
+    /^it\s+is\s+written\s+(?:in\s+)?/i,
+    // "it is clear from scriptures that"
+    /^it\s+is\s+clear\s+from\s+(?:the\s+)?scriptures?\s+(?:that\s+)?/i,
+    // "the scriptures cannot be broken" (Oyakhilome authority emphasis before verse)
+    /^the\s+scriptures?\s+cannot\s+be\s+broken\s*/i,
+    // "remember the words of Jesus (in)" (Oyakhilome)
+    /^remember\s+the\s+words?\s+of\s+(?:jesus|christ|god|the\s+lord)\s+(?:in\s+)?/i,
+    // "can I read from" / "can we read" / "can somebody read"
+    /^can\s+(?:i|we|somebody|someone)\s+(?:hear\s+(?:somebody\s+)?)?read\s+(?:from\s+)?/i,
     // "if you have your Bible turn to" (Nigerian phrasing)
     /^if\s+you\s+have\s+your\s+(?:bible|bibles?)\s*,?\s*(?:turn|open)\s+(?:with\s+me\s+)?to\s+/i,
-    // "are you there" / "somebody say amen" — strip trailing congregation engagement
-    // (these come AFTER the reference, handled in post-processing below)
     // "go with me to the book of" — Nigerian variant
     /^go\s+with\s+me\s+to\s+(?:the\s+book\s+of\s+)?/i,
+    // "I want you to follow me to" (Nigerian directive)
+    /^i\s+want\s+you\s+to\s+follow\s+me\s+to\s+/i,
+    // "follow me to" / "follow me quickly to"
+    /^follow\s+me\s+(?:quickly\s+)?to\s+/i,
+    // "very quickly let us go to" / "quickly turn to" / "quickly go to" (Adeboye signature)
+    /^(?:very\s+)?quickly\s+(?:let(?:'s|\s+us)\s+)?(?:go|turn|open)\s+(?:with\s+me\s+)?(?:to|your\s+bibles?\s+to)\s+/i,
+    // "kindly turn to" / "kindly open your Bible to" (polite Nigerian form)
+    /^kindly\s+(?:turn|open)\s+(?:your\s+(?:bible|bibles?)\s+)?to\s+/i,
+    // "our anchor scripture is" / "our foundation text is" / "our Bible text is"
+    /^(?:our|the)\s+(?:anchor|foundation|key|main|central)\s+(?:scripture|text|verse|passage)\s+(?:(?:is|comes?\s+from)\s+)?(?:found\s+in\s+|from\s+|in\s+)?/i,
+    // "our text is taken from" / "our Bible text is"
+    /^(?:our|the)\s+(?:bible\s+)?text\s+(?:is\s+)?(?:taken\s+from\s+|from\s+|in\s+)?/i,
+    // "the word for today is from" / "our word for tonight is from"
+    /^(?:our|the)\s+word\s+for\s+(?:today|tonight|this\s+(?:morning|evening|service))\s+(?:is\s+)?(?:from\s+|in\s+)?/i,
+    // "write this down" / "write it down" (Selman signature)
+    /^write\s+(?:this|it)\s+down\s*/i,
     // "I say again" (Nigerian emphasis repetition)
     /^i\s+say\s+again\s*/i,
-    // "say it with me" / "read it with me"
-    /^(?:say|read)\s+(?:it\s+)?with\s+me\s*/i,
+    // "I announce to you (from)" / "I declare (from)" (Oyedepo prophetic)
+    /^i\s+(?:announce|declare)\s+(?:to\s+you\s+)?(?:from\s+)?/i,
+    // "say it with me" / "read it with me" / "say after me" / "confess this"
+    /^(?:say|read)\s+(?:it\s+)?(?:with|after)\s+me\s*/i,
+    /^(?:say\s+this\s+after\s+me|confess\s+this|make\s+this\s+confession)\s*/i,
+    // "you know the story in" (assumes congregational familiarity)
+    /^you\s+know\s+the\s+(?:story|passage|verse|scripture)\s+(?:in\s+)?/i,
+    // ── Nigerian Pidgin preambles ────────────────────────────────────────
+    // "make we read (from)" — Pidgin for "let us read"
+    /^make\s+we\s+read\s+(?:from\s+)?/i,
+    // "di Bible talk say" / "di Bible say" — Pidgin for "the Bible says"
+    /^(?:di|the)\s+(?:bible|word\s+of\s+god)\s+(?:talk\s+)?say\s+(?:for\s+)?/i,
+    // "di word of God talk say" — Pidgin
+    /^(?:di|the)\s+word\s+(?:of\s+god\s+)?(?:talk\s+)?say\s+(?:for\s+)?/i,
+    // "e dey for" / "e dey inside" — Pidgin: "it is in"
+    /^e\s+dey\s+(?:for|inside)\s+/i,
+    // "wetin God talk for" — Pidgin: "what God said in"
+    /^wetin\s+(?:god|the\s+lord)\s+(?:talk|say)\s+(?:for|inside)\s+/i,
+    // "na so e write for" — Pidgin: "that's how it's written in"
+    /^na\s+so\s+(?:e|dem)\s+(?:write|talk)\s+(?:for|am\s+for)\s+/i,
+    // "abeg open" — Pidgin: "please open"
+    /^abeg\s+(?:open|turn|read)\s+(?:your\s+(?:bible|bibles?)\s+)?(?:to\s+|from\s+)?/i,
+    // "open your Bible go" — Pidgin directive
+    /^open\s+your\s+(?:bible|bibles?)\s+go\s+/i,
+    // ── Generic catch-all patterns (must stay at bottom) ─────────────────
     // "de book of" — Nigerian th→d accent (Google STT may transcribe this way)
-    /^(?:de|da)\s+book\s+of\s+/i,
+    /^(?:de|da|di)\s+book\s+of\s+/i,
     // Generic trailing "in" / "at" / "from" after any remaining prefix
     /^(?:from|in|at)\s+/i,
   ];
@@ -1429,12 +1585,26 @@ function extractRef(rawText) {
     }
   }
 
-  // ── Pass 3: number-harvesting fallback for anything still unmatched ───────
-  // harvestRef removed — it grabbed any two numbers anywhere in the text
-  // after a book name, causing constant false positives in normal speech.
-  if (false) {
-    log(`🔧 Harvested from garbled speech: ${harvested.full}`, 'dl-detected');
-    return harvested;
+  // ── Pass 3: 2-digit merged number fallback ──────────────────────────────
+  // "Revelation 99" → try splitting as "Revelation 9:9"
+  // Only fires when no pattern matched above — safe because a bare 2-digit
+  // number after a book name (e.g. "Psalm 23") wouldn't have matched anyway
+  // (all patterns require both chapter AND verse).
+  const twoDigitRE = new RegExp(
+    `(${BOOK_PATTERN})\\s+(\\d{2})\\b`, 'gi'
+  );
+  twoDigitRE.lastIndex = 0;
+  const tdMatch = twoDigitRE.exec(text);
+  if (tdMatch) {
+    const tdBook = resolveBook(tdMatch[1].trim());
+    const num = tdMatch[2];
+    if (tdBook && num.length === 2) {
+      const chapter = num[0], verse = num[1];
+      if (parseInt(chapter) >= 1 && parseInt(verse) >= 1) {
+        log(`🔧 Split 2-digit fallback: "${rawText.trim()}" → ${tdBook} ${chapter}:${verse}`, 'dl-detected');
+        return { book: tdBook, chapter, verse, full: `${tdBook} ${chapter}:${verse}` };
+      }
+    }
   }
 
   return null;
@@ -1502,7 +1672,7 @@ function extractRelativeVerse(rawText) {
   // Optional navigation preamble, then "verse N"
   const m = text.match(
     // Trigger is MANDATORY — bare "verse N" fires on normal sermon speech
-    /(?:(?:go|jump|skip|move|turn)\s+to\s+|let(?:'s|\s+us)\s+(?:go\s+to\s+|look\s+at\s+|read\s+)?|now\s+)verse\s+(\d{1,3})/
+    /(?:(?:go|jump|skip|move|turn|drop|come)\s+(?:down\s+)?to\s+|(?:but\s+)?(?:now\s+)?look\s+at\s+|let(?:'s|\s+us)\s+(?:go\s+to\s+|look\s+at\s+|read\s+)?|(?:and\s+then|continuing\s+(?:in|at)|moving\s+to|still\s+(?:in|at))\s+|now\s+)verse\s+(\d{1,3})/
   );
   if (!m) return null;
   const v = parseInt(m[1], 10);
@@ -2328,7 +2498,8 @@ const BOLLS_TRANSLATIONS = new Set([
 const BIBLEAPI_TRANSLATIONS = new Set(['kjv','web','asv','bbe','oeb-us','clementine','almeida','rccv']);
 
 function stripHtml(html) {
-  return html.replace(/<[^>]+>/g, '').replace(/\s+/g,' ').trim();
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  return (doc.body.textContent || '').replace(/\s+/g,' ').trim();
 }
 
 // ── Detect file:// context — all external requests need a proxy ───────────────
@@ -2446,10 +2617,10 @@ async function warmMemoryCacheFromIDB() {
 
 async function updateCacheUI() {
   const n       = await idbCount();
-  const localN  = Object.keys(LOCAL_KJV).length;
+  const localN  = FULL_KJV ? Object.keys(FULL_KJV).length : Object.keys(LOCAL_KJV).length;
   const label   = $('cacheStatLabel');
   const netLbl  = $('netCacheLabel');
-  if (label)  label.textContent  = `Offline cache: ${n} fetched + ${localN} built-in`;
+  if (label)  label.textContent  = `Offline cache: ${n} fetched + ${localN} KJV built-in`;
   if (netLbl) netLbl.textContent = n ? ` · ${n} cached` : '';
 }
 
@@ -2564,6 +2735,33 @@ async function fetchBibleApiViaProxy(transLower, ref) {
 //
 //  After any Tier 3 fetch the result is written to BOTH Tier 0 and Tier 2
 //  so the verse is available instantly and offline on all future lookups.
+// ── Full KJV Bible (loaded lazily from local server) ─────────────────────────
+let FULL_KJV = null;
+let _fullKjvPromise = null;
+
+async function ensureFullKJV() {
+  if (FULL_KJV) return;
+  if (_fullKjvPromise) return _fullKjvPromise;
+  _fullKjvPromise = (async () => {
+    try {
+      const resp = await fetch('/kjv-full.json');
+      if (resp.ok) {
+        FULL_KJV = await resp.json();
+        const count = Object.keys(FULL_KJV).length;
+        log(`📖 Full KJV Bible loaded: ${count} verses (offline ready)`, 'dl-miss');
+        updateCacheUI();
+      } else {
+        FULL_KJV = {};
+        log('⚠ kjv-full.json not found — using built-in KJV subset', 'dl-miss');
+      }
+    } catch {
+      FULL_KJV = {};
+      log('⚠ Could not load full KJV — using built-in subset', 'dl-miss');
+    }
+  })();
+  return _fullKjvPromise;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 async function fetchVerse(ref, trans) {
   const transUpper = trans.toUpperCase();
@@ -2583,15 +2781,17 @@ async function fetchVerse(ref, trans) {
     return text;
   };
 
-  // Tier 1 — Hardcoded KJV
+  // Tier 1 — Full local KJV Bible (31,102 verses, loaded from kjv-full.json)
   if (transUpper === 'KJV') {
+    await ensureFullKJV();  // lazy-load on first use
     const key    = ref.full;
     const altKey = key.startsWith('Psalm ') ? key.replace('Psalm ','Psalms ')
                  : key.startsWith('Psalms ') ? key.replace('Psalms ','Psalm ') : null;
-    const local  = LOCAL_KJV[key] || (altKey && LOCAL_KJV[altKey]);
+    const local  = FULL_KJV[key] || (altKey && FULL_KJV[altKey])
+                || LOCAL_KJV[key] || (altKey && LOCAL_KJV[altKey]);
     if (local) {
-      log('📖 Local KJV (built-in)', 'dl-miss');
-      VERSE_CACHE.set(cacheKey, local);  // warm memory; no need to IDB-write built-ins
+      log('📖 Local KJV (offline)', 'dl-miss');
+      VERSE_CACHE.set(cacheKey, local);
       return local;
     }
   }
@@ -2681,8 +2881,8 @@ const TRANS_VOICE_MAP = [
   { code:'ESV',   phrases:['english standard version','english standard','esv'] },
   { code:'NKJV',  phrases:['new king james version','new king james','nkjv'] },
   { code:'NASB',  phrases:['new american standard bible','new american standard','nasb'] },
-  { code:'AMP',   phrases:['amplified bible','amplified','amp'] },
-  { code:'MSG',   phrases:['the message','message bible','message translation','msg'] },
+  { code:'AMP',   phrases:['the amplified bible','amplified bible','the amplified version','amplified version','amplified','amp'] },
+  { code:'MSG',   phrases:['the message bible','the message','message bible','message translation','msg'] },
   { code:'CSB17', phrases:['christian standard bible','christian standard','csb'] },
   { code:'NET',   phrases:['new english translation','net bible','net translation'] },
   { code:'RSV',   phrases:['revised standard version','revised standard','rsv'] },
@@ -2722,18 +2922,18 @@ const STRICT_TRIGGERS = /\b(version|translation|bible|switch|give me|show me|use
 // naturally in non-Bible speech.
 const LOOSE_TRANS_MAP = [
   { code:'NIV',   phrases:['new international version','new international','niv'] },
-  { code:'KJV',   phrases:['king james version','king james','kjv','authorized version','authorised version'] },
-  { code:'NLT',   phrases:['new living translation','new living','nlt'] },
-  { code:'ESV',   phrases:['english standard version','english standard','esv'] },
-  { code:'NKJV',  phrases:['new king james version','new king james','nkjv'] },
-  { code:'NASB',  phrases:['new american standard bible','new american standard','nasb'] },
-  { code:'AMP',   phrases:['amplified bible','amplified version','amp bible'] },
+  { code:'KJV',   phrases:['king james version','the king james','king james','kjv','authorized version','authorised version'] },
+  { code:'NLT',   phrases:['new living translation','the new living','new living','nlt'] },
+  { code:'ESV',   phrases:['english standard version','the english standard','english standard','esv'] },
+  { code:'NKJV',  phrases:['new king james version','the new king james','new king james','nkjv'] },
+  { code:'NASB',  phrases:['new american standard bible','the new american standard','new american standard','nasb'] },
+  { code:'AMP',   phrases:['the amplified bible','amplified bible','the amplified version','amplified version','the amplified','amplified'] },
   { code:'MSG',   phrases:['the message bible','message translation','message version'] },
-  { code:'CSB17', phrases:['christian standard bible','christian standard','csb'] },
+  { code:'CSB17', phrases:['christian standard bible','the christian standard','christian standard','csb'] },
   { code:'NET',   phrases:['new english translation','net bible'] },
-  { code:'RSV',   phrases:['revised standard version','revised standard','rsv'] },
+  { code:'RSV',   phrases:['revised standard version','the revised standard','revised standard','rsv'] },
   { code:'WEB',   phrases:['world english bible','world english'] },
-  { code:'ASV',   phrases:['american standard version','american standard','asv'] },
+  { code:'ASV',   phrases:['american standard version','the american standard','american standard','asv'] },
   { code:'YLT',   phrases:["young's literal translation","young's literal","young literal","ylt"] },
   { code:'CJB',   phrases:['complete jewish bible','jewish bible','cjb'] },
   { code:'BSB',   phrases:['berean standard bible','berean standard','berean bible','bsb'] },
@@ -2747,7 +2947,7 @@ for (const { code, phrases } of LOOSE_TRANS_MAP) {
 LOOSE_PHRASES_SORTED.sort((a, b) => b.phrase.length - a.phrase.length);
 
 function extractTranslation(rawText, looseMode = false) {
-  const text = rawText.toLowerCase();
+  const text = rawText.toLowerCase().replace(/[.!?;]+$/g, '').trim();
 
   // Strict mode — requires an action trigger word (original behaviour)
   if (!looseMode) {
@@ -2781,9 +2981,9 @@ function switchTranslation(code, note) {
   // Already showing this translation (and no note to display) — skip
   if (currentCode === code && !note) return;
 
-  // Update the select — try to find the option, fallback to KJV if not in list
+  // Update the select — try to find the option, fallback to NKJV if not in list
   const optionExists = Array.from(select.options).some(o => o.value === code);
-  select.value = optionExists ? code : 'KJV';
+  select.value = optionExists ? code : 'NKJV';
   const finalCode = select.value;
 
   const label = TRANS_LABELS[finalCode] || finalCode;
@@ -3014,8 +3214,8 @@ function renderHistory() {
   if (!sessionHistory.length) { list.innerHTML = '<span class="hist-empty">No verses shown yet</span>'; return; }
   list.innerHTML = sessionHistory.map((h,i) => `
     <div class="hist-item" data-i="${i}">
-      <span class="hist-ref">${h.full}</span>
-      <span class="hist-t">${h.trans.toUpperCase()}</span>
+      <span class="hist-ref">${escHtml(h.full)}</span>
+      <span class="hist-t">${escHtml(h.trans.toUpperCase())}</span>
     </div>`).join('');
   list.querySelectorAll('.hist-item').forEach(el => {
     el.addEventListener('click', () => {
@@ -3054,8 +3254,8 @@ function highlightTranscript(text) {
     const converted = wordsToDigits(text);
     // We'll just bold the matched range — apply to original text
   }
-  // Simple approach: highlight after converting
-  const converted = wordsToDigits(text);
+  // Simple approach: escape first, then highlight after converting
+  const converted = escHtml(wordsToDigits(text));
   let highlighted = converted;
   for (const re of PATTERNS) {
     re.lastIndex = 0;
@@ -3065,28 +3265,15 @@ function highlightTranscript(text) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// 7. SPEECH RECOGNITION  +  PERSISTENT MICROPHONE PERMISSION
+// 7. SPEECH RECOGNITION (Azure Speech SDK via polyfill)
 //
-//  Strategy — why the browser keeps asking:
-//    SpeechRecognition internally calls getUserMedia on every new instance.
-//    When there is no live MediaStream already open the browser re-prompts.
-//
-//  Fix:
-//    1. Call getUserMedia({audio:true}) ONCE and keep that stream alive.
-//       While the stream is open the browser treats permission as already held
-//       and never shows the prompt again — even after page reloads.
-//    2. On page load, query navigator.permissions for 'microphone'.
-//       If 'granted' → silently reacquire stream, mark button ready.
-//       If 'denied'  → show clear guidance, disable button.
-//       If 'prompt'  → wait; show the native dialog only on the first click.
-//    3. Watch permissionStatus.onchange so we react instantly if the user
-//       revokes or re-grants permission inside browser Settings.
-//    4. stopListening() NEVER kills the shared stream — only recognition stops.
+//  Electron auto-grants mic permission via setPermissionRequestHandler and
+//  setPermissionCheckHandler in main.js. Azure SDK manages its own mic
+//  internally — no getUserMedia needed in renderer.
 // ═══════════════════════════════════════════════════════════════════════════════
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 let recognition = null, listening = false, accumulated = '';
 let debounceTimer = null;
-let sharedStream = null; // kept alive so the browser never re-prompts
 
 if (!SR) {
   $('micStatus').textContent = '⚠ Speech Recognition not supported — use Chrome or Edge';
@@ -3094,19 +3281,48 @@ if (!SR) {
   $('micBtn').disabled = true;
 }
 
-// ── Acquire (or return cached) MediaStream ────────────────────────────────────
-async function acquireMicStream() {
-  if (sharedStream) return sharedStream;
+// ── Audio input device selector ───────────────────────────────────────────────
+let _micEnumGranted = false;
+async function populateAudioDevices() {
+  const sel = $('micDeviceSelect');
+  if (!sel) return;
   try {
-    sharedStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-    localStorage.setItem('verseair_mic', 'granted');
-    return sharedStream;
-  } catch(e) {
-    localStorage.removeItem('verseair_mic');
-    sharedStream = null;
-    return null;
-  }
+    // Browser needs a getUserMedia grant before enumerateDevices returns labels.
+    // In Electron this is auto-approved, so do it once silently.
+    if (!_micEnumGranted) {
+      const tmp = await navigator.mediaDevices.getUserMedia({ audio: true });
+      tmp.getTracks().forEach(t => t.stop()); // release immediately
+      _micEnumGranted = true;
+    }
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const audioInputs = devices.filter(d => d.kind === 'audioinput');
+    const saved = localStorage.getItem('verseair_mic_device') || '';
+    sel.innerHTML = '<option value="">Default microphone</option>';
+    for (const d of audioInputs) {
+      const opt = document.createElement('option');
+      opt.value = d.deviceId;
+      opt.textContent = d.label || `Microphone ${sel.options.length}`;
+      if (d.deviceId === saved) opt.selected = true;
+      sel.appendChild(opt);
+    }
+  } catch(e) { /* enumerateDevices may fail if no mic connected */ }
 }
+
+$('micDeviceSelect').addEventListener('change', async () => {
+  const deviceId = $('micDeviceSelect').value;
+  localStorage.setItem('verseair_mic_device', deviceId);
+  // If currently listening, restart with the new device
+  if (listening) {
+    stopListening();
+    await startListening();
+  }
+});
+
+// Re-populate device list when devices change (plug/unplug)
+if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
+  navigator.mediaDevices.addEventListener('devicechange', populateAudioDevices);
+}
+
 
 // ── UI state helpers ──────────────────────────────────────────────────────────
 function setMicReady() {
@@ -3119,42 +3335,17 @@ function setMicReady() {
 function setMicDenied() {
   if (listening) stopListening();
   $('micBtn').disabled = true;
-  $('micStatus').textContent = '⚠ Mic blocked — click the 🔒 lock icon in your address bar and allow Microphone';
+  $('micStatus').textContent = '⚠ Mic unavailable — check system audio settings';
   $('micStatus').className = 'mic-status err';
   $('micBtn').classList.remove('listening');
-  log('❌ Microphone permission denied by browser', 'dl-err');
+  log('❌ Microphone not available', 'dl-err');
 }
 
-// ── Handle a permission state string ('granted'|'denied'|'prompt') ────────────
-async function handlePermState(state) {
-  if (state === 'granted') {
-    await acquireMicStream(); // reacquire silently — holds the grant open
-    setMicReady();
-  } else if (state === 'denied') {
-    setMicDenied();
-  }
-  // 'prompt' — nothing to do; first click will trigger the native dialog once
-}
-
-// ── On page load: check permission + watch for changes ───────────────────────
+// ── On page load: set mic ready (Electron auto-grants mic permission) ────────
 (async function initMicPermission() {
   if (!SR) return;
-
-  if (navigator.permissions) {
-    try {
-      const status = await navigator.permissions.query({ name: 'microphone' });
-      await handlePermState(status.state);
-      // Whenever the user changes the permission in browser Settings, react immediately
-      status.onchange = () => handlePermState(status.state);
-      return;
-    } catch(e) { /* Permissions API unavailable — fall through */ }
-  }
-
-  // Fallback: no Permissions API — use localStorage hint from last session
-  if (localStorage.getItem('verseair_mic') === 'granted') {
-    const s = await acquireMicStream();
-    if (s) setMicReady();
-  }
+  populateAudioDevices();
+  setMicReady();
 })();
 
 function createRecognitionInstance() {
@@ -3206,18 +3397,25 @@ function attachHandlers(r) {
     // Log what was heard
     if (finalChunk.trim()) log(`🎤 Heard: "${finalChunk.trim()}"`, 'dl-heard');
 
-    // Debounce detection by 1000ms — waits for speech to finalise before scanning
+    // ── INSTANT verse detection on interim results ──────────────────────────
+    // Scan interim speech immediately — don't wait for Azure to finalise.
+    // This is VerseAir's USP: near-instant projection as soon as the verse
+    // reference is spoken. Use combined text so partial speech is scanned.
+    const liveText = (accumulated + ' ' + interim).trim() || fullText;
+
+    // Short debounce (150ms) — just enough to batch rapid interim updates,
+    // but fires almost instantly compared to the old 1000ms wait.
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
       // ── Scan for translation (strict first, then loose) ───────────────────
-      const transMatch = extractTranslation(fullText, false)
-                      || extractTranslation(fullText, true);
+      const transMatch = extractTranslation(liveText, false)
+                      || extractTranslation(liveText, true);
 
       // ── Scan for a RANGE first (takes priority over single verse) ─────────
-      const rangeMatch = extractRange(fullText);
+      const rangeMatch = extractRange(liveText);
 
       // ── Scan for a single verse reference ────────────────────────────────
-      const ref = rangeMatch ? null : extractRef(fullText);
+      const ref = rangeMatch ? null : extractRef(liveText);
 
       // If voice-guided mode is active but no explicit reference detected,
       // skip the rest — only track reading progress (handled above)
@@ -3247,7 +3445,7 @@ function attachHandlers(r) {
         log(`📖 Range: ${rangeMatch.full} [${finalCode}]`, 'dl-detected');
         displayRange(rangeMatch, finalCode);
         accumulated = '';
-        lastDetectedFull = null;
+        setTimeout(() => { lastDetectedFull = null; }, 3000);
         setTimeout(() => { $('tbox').innerHTML = '<span class="ph">Speech will appear here…</span>'; }, 1800);
         return;
       }
@@ -3259,17 +3457,19 @@ function attachHandlers(r) {
       if (ref && transMatch) {
         const newCode = transMatch.code;
         const select  = $('trans');
+        const prevCode = select.value;
         const optionExists = Array.from(select.options).some(o => o.value === newCode);
         select.value = optionExists ? newCode : select.value;
         const finalCode = select.value;
 
-        if (finalCode !== transMatch.code || ref.full !== currentRef?.full || $('vcontent').style.display === 'none') {
+        // Fire if: translation changed, OR verse changed, OR verse panel is hidden
+        if (finalCode !== prevCode || ref.full !== currentRef?.full || $('vcontent').style.display === 'none') {
           log(`🌐 Translation + verse: ${ref.full} [${finalCode}]`, 'dl-detected');
           showTransToast(`✓ ${TRANS_LABELS[finalCode] || finalCode}`);
           displayVerse(ref, finalCode);
         }
         accumulated = '';
-        lastDetectedFull = null;
+        setTimeout(() => { lastDetectedFull = null; }, 3000);
         setTimeout(() => { $('tbox').innerHTML = '<span class="ph">Speech will appear here…</span>'; }, 1800);
         return;
       }
@@ -3295,7 +3495,8 @@ function attachHandlers(r) {
         log(`📖 Detected: ${ref.full}`, 'dl-detected');
         displayVerse(ref, $('trans').value);
         accumulated = '';
-        lastDetectedFull = null;
+        // Keep guard for 3s to prevent re-fires from rapid interim results
+        setTimeout(() => { lastDetectedFull = null; }, 3000);
         setTimeout(() => {
           $('tbox').innerHTML = '<span class="ph">Speech will appear here…</span>';
         }, 1800);
@@ -3308,13 +3509,13 @@ function attachHandlers(r) {
       //   No verse number spoken — default to verse 1 of that chapter.
       // ─────────────────────────────────────────────────────────────────────
       if (!ref && !rangeMatch) {
-        const chapterRef = extractChapterOnlyRef(fullText);
+        const chapterRef = extractChapterOnlyRef(liveText);
         if (chapterRef && chapterRef.full !== lastDetectedFull) {
           lastDetectedFull = chapterRef.full;
           log(`📖 Chapter: ${chapterRef.book} ${chapterRef.chapter} → showing verse 1`, 'dl-detected');
           displayVerse(chapterRef, $('trans').value);
           accumulated = '';
-          lastDetectedFull = null;
+          setTimeout(() => { lastDetectedFull = null; }, 3000);
           setTimeout(() => { $('tbox').innerHTML = '<span class="ph">Speech will appear here…</span>'; }, 1800);
           return;
         }
@@ -3326,7 +3527,7 @@ function attachHandlers(r) {
       //   Only fires when something is already being displayed (currentRef set).
       // ─────────────────────────────────────────────────────────────────────
       if (!ref && !rangeMatch && currentRef) {
-        const relVerse = extractRelativeVerse(fullText);
+        const relVerse = extractRelativeVerse(liveText);
         if (relVerse !== null) {
           const relRef = {
             book:    currentRef.book,
@@ -3339,7 +3540,7 @@ function attachHandlers(r) {
             log(`📖 Relative verse: ${relRef.full} (context: ${currentRef.book} ${currentRef.chapter})`, 'dl-detected');
             displayVerse(relRef, $('trans').value);
             accumulated = '';
-            lastDetectedFull = null;
+            setTimeout(() => { lastDetectedFull = null; }, 3000);
             setTimeout(() => { $('tbox').innerHTML = '<span class="ph">Speech will appear here…</span>'; }, 1800);
             return;
           }
@@ -3354,66 +3555,53 @@ function attachHandlers(r) {
           debounceContextSearch(finalChunk.trim());
         }
       }
-    }, 1000);
+    }, 150);
   };
 
   r.onerror = (e) => {
     if (e.error === 'not-allowed') {
-      sharedStream = null; // permission was revoked; clear cached stream
-      localStorage.removeItem('verseair_mic');
       setMicDenied();
     } else if (e.error === 'network') {
-      log('⚠ Network error in speech API', 'dl-err');
+      log('⚠ Network error — check internet connection', 'dl-err');
     } else if (e.error !== 'no-speech') {
       log(`⚠ Speech error: ${e.error}`, 'dl-err');
     }
   };
 
   // ── Keep-alive restart ────────────────────────────────────────────────────
-  // Chrome fires onend ~every 10s in continuous mode.
-  // CRITICAL: call .start() on the SAME instance — do NOT create a new one.
-  // Every new SpeechRecognition instance makes its own internal getUserMedia
-  // call, which is exactly what triggers the browser permission prompt each time.
-  // Reusing the same object avoids that entirely.
-  r.onend = () => {
+  // Azure SDK fires onend when session stops unexpectedly.
+  // Create a fresh recognizer to restart listening.
+  r.onend = async () => {
     if (!listening) return;
     try {
-      r.start(); // same instance — no new getUserMedia, no new permission dialog
+      const deviceId = localStorage.getItem('verseair_mic_device') || '';
+      recognition = createRecognitionInstance();
+      recognition.deviceId = deviceId;
+      attachHandlers(recognition);
+      await recognition.start();
     } catch(e) {
-      // "InvalidStateError: already started" can fire if onend and a manual
-      // .start() race — safe to ignore
-      if (!e.message.includes('already')) {
-        log(`⚠ Restart failed: ${e.message}`, 'dl-err');
-      }
+      console.error('[VerseAir] Keep-alive restart error:', e);
+      log(`⚠ Restart failed: ${e.message}`, 'dl-err');
     }
   };
 }
 
 async function startListening() {
-  // Step 1 — get mic permission via getUserMedia once.
-  // This shows the native dialog on first use only. On subsequent calls
-  // sharedStream is already open so it returns immediately, no dialog.
-  const stream = await acquireMicStream();
-  if (!stream) {
-    setMicDenied();
-    return;
-  }
-
   accumulated = '';
 
-  // Step 2 — create ONE instance for the whole session (or reuse existing).
-  // Never create a new instance just to restart — that's what caused the
-  // repeated permission prompts.
-  if (!recognition) {
-    recognition = createRecognitionInstance();
-    attachHandlers(recognition);
-  }
+  // Create a new Azure recognizer each time (Azure SDK manages its own mic
+  // internally — no need for getUserMedia pre-check in Electron).
+  const deviceId = localStorage.getItem('verseair_mic_device') || '';
+  recognition = createRecognitionInstance();
+  recognition.deviceId = deviceId;  // Azure polyfill uses this for mic selection
+  attachHandlers(recognition);
 
   try {
-    recognition.start();
+    await recognition.start();  // must await — Azure polyfill start() is async
   } catch(e) {
+    console.error('[VerseAir] startListening error:', e);
     log(`❌ Could not start: ${e.message}`, 'dl-err');
-    $('micStatus').textContent = '⚠ Could not start — open file in Chrome';
+    $('micStatus').textContent = '⚠ Could not start — check mic connection';
     $('micStatus').className = 'mic-status err';
   }
 }
@@ -3421,10 +3609,11 @@ async function startListening() {
 function stopListening() {
   listening = false;
   clearTimeout(debounceTimer);
-  // Stop audio capture — but keep the recognition OBJECT alive so startListening()
-  // can call .start() on the same instance next time without creating a new one.
-  // Also keep sharedStream alive so the browser holds our permission grant open.
-  if (recognition) { try { recognition.stop(); } catch(e){} }
+  // Stop and close the Azure recognizer — a new one is created on each start
+  if (recognition) {
+    try { recognition.stop(); } catch(e){}
+    recognition = null;
+  }
   $('micBtn').classList.remove('listening');
   $('micIcon').textContent = '🎙️';
   $('micStatus').textContent = '✓ Mic ready — click to start';
@@ -4033,8 +4222,6 @@ function renderSummary(s, meta) {
   const date = new Date().toLocaleDateString('en-GB', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
   const sub  = [meta.preacher, date].filter(Boolean).join(' · ');
 
-  const escHtml = t => t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-
   const summaryParas = (s.summary || '').split(/\n\n+/).map(p =>
     `<p>${escHtml(p.trim())}</p>`).join('');
 
@@ -4218,7 +4405,7 @@ $('sumPrintBtn').addEventListener('click', () => {
   const text = $('summaryOverlay').dataset.plainText;
   if (!text) return;
   const w = window.open('', '_blank');
-  w.document.write(`<pre style="font-family:Georgia,serif;font-size:13px;line-height:1.7;max-width:720px;margin:40px auto;white-space:pre-wrap">${text.replace(/</g,'&lt;')}</pre>`);
+  w.document.write(`<pre style="font-family:Georgia,serif;font-size:13px;line-height:1.7;max-width:720px;margin:40px auto;white-space:pre-wrap">${escHtml(text)}</pre>`);
   w.document.close();
   w.print();
 });
@@ -4362,88 +4549,26 @@ let _flexReady = false;
 
 async function initSearchIndex() {
   try {
-    // Wait for any in-flight IDB operations (warmMemoryCacheFromIDB) to finish
-    await new Promise(r => setTimeout(r, 2000));
+    // Load KJV data from bundled local file (no network needed)
+    const resp = await fetch('/kjv-full.json');
+    if (!resp.ok) throw new Error(`Failed to load kjv-full.json: ${resp.status}`);
+    const kjvData = await resp.json();
 
-    // Upgrade IndexedDB to add the new store if needed
-    const currentVersion = _idb ? _idb.version : IDB_VERSION;
-    const newVersion = Math.max(currentVersion, 2);
-
-    // Close existing connection so we can upgrade
-    if (_idb) { _idb.close(); _idb = null; }
-
-    const db = await new Promise((resolve, reject) => {
-      const req = indexedDB.open(IDB_NAME, newVersion);
-      req.onupgradeneeded = e => {
-        const db = e.target.result;
-        if (!db.objectStoreNames.contains(IDB_STORE))
-          db.createObjectStore(IDB_STORE, { keyPath: 'id' });
-        if (!db.objectStoreNames.contains(CTX_IDB_STORE))
-          db.createObjectStore(CTX_IDB_STORE, { keyPath: 'id' });
-      };
-      req.onsuccess = e => resolve(e.target.result);
-      req.onerror = () => reject(req.error);
-    });
-    _idb = db; // update shared connection
-
-    // Check if KJV data is already cached
-    const cached = await new Promise(resolve => {
-      const tx = db.transaction(CTX_IDB_STORE, 'readonly');
-      const store = tx.objectStore(CTX_IDB_STORE);
-      const req = store.get('kjv-full');
-      req.onsuccess = () => resolve(req.result?.data || null);
-      req.onerror = () => resolve(null);
-    });
-
-    let verses;
-    if (cached) {
-      verses = cached;
-      log('📚 Search index loaded from cache', 'dl-miss');
-    } else {
-      // Fetch KJV Bible JSON from CDN
-      log('📚 Downloading Bible search index…', 'dl-miss');
-      const resp = await fetch('https://cdn.jsdelivr.net/gh/aruljohn/Bible-kjv@master/Books.json',
-                               { signal: AbortSignal.timeout(30000) });
-      if (!resp.ok) throw new Error(`CDN error ${resp.status}`);
-      const books = await resp.json();
-
-      // Fetch each book and build verse array
-      // Books.json returns an array of strings: ["Genesis", "Exodus", ...]
-      verses = [];
-      for (const bookName of books) {
-        const name = typeof bookName === 'string' ? bookName : bookName.name;
-        if (!name) continue;
-        try {
-          const bResp = await fetch(
-            `https://cdn.jsdelivr.net/gh/aruljohn/Bible-kjv@master/${encodeURIComponent(name)}.json`,
-            { signal: AbortSignal.timeout(10000) }
-          );
-          if (!bResp.ok) continue;
-          const bData = await bResp.json();
-          for (const chapter of bData.chapters) {
-            const chNum = chapter.chapter || String(bData.chapters.indexOf(chapter) + 1);
-            const verseList = Array.isArray(chapter.verses) ? chapter.verses : [];
-            for (const v of verseList) {
-              const vNum = v.verse || v.number;
-              const text = v.text;
-              if (!text || typeof text !== 'string') continue;
-              verses.push({
-                id: `${name}-${chNum}-${vNum}`,
-                ref: `${name} ${chNum}:${vNum}`,
-                book: name,
-                chapter: String(chNum),
-                verse: String(vNum),
-                text,
-              });
-            }
-          }
-        } catch { /* skip failed book */ }
-      }
-
-      // Cache in IndexedDB
-      const tx = db.transaction(CTX_IDB_STORE, 'readwrite');
-      tx.objectStore(CTX_IDB_STORE).put({ id: 'kjv-full', data: verses, ts: Date.now() });
-      log(`📚 Cached ${verses.length} verses for search`, 'dl-miss');
+    // kjv-full.json format: { "Genesis 1:1": "In the beginning...", ... }
+    const verses = [];
+    for (const [ref, text] of Object.entries(kjvData)) {
+      if (!text || typeof text !== 'string') continue;
+      const match = ref.match(/^(.+?)\s+(\d+):(\d+)$/);
+      if (!match) continue;
+      const [, book, chapter, verse] = match;
+      verses.push({
+        id: `${book}-${chapter}-${verse}`,
+        ref,
+        book,
+        chapter,
+        verse,
+        text,
+      });
     }
 
     // Build FlexSearch index
