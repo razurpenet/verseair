@@ -394,9 +394,86 @@ main{flex:1;display:grid;grid-template-columns:340px 1fr 280px;overflow:hidden}
   font-size:0.78rem;color:var(--text);line-height:1.4;
   font-style:italic;opacity:0.8;max-height:36px;overflow:hidden;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   STAGE 1: PRODUCTION PANEL — Theme, Backgrounds, Timer, Lower Thirds
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* PRODUCTION SECTION */
+.prod-section{border-top:1px solid var(--border);padding-top:14px;margin-top:4px}
+.prod-group{margin-bottom:14px}
+.prod-group-label{font-family:'Cinzel',serif;font-size:0.62rem;letter-spacing:0.1em;color:var(--muted);text-transform:uppercase;margin-bottom:6px}
+.prod-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.prod-row label{font-size:0.74rem;color:var(--muted);min-width:56px;flex-shrink:0}
+.prod-select{background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'EB Garamond',serif;font-size:0.78rem;padding:4px 8px;border-radius:6px;cursor:pointer;outline:none;flex:1;min-width:0}
+.prod-select:focus{border-color:var(--gold)}
+.prod-input{background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'EB Garamond',serif;font-size:0.78rem;padding:4px 8px;border-radius:6px;outline:none;flex:1;min-width:0}
+.prod-input:focus{border-color:var(--gold)}
+.prod-input::placeholder{color:var(--muted);opacity:0.6}
+.prod-btn{background:var(--gold-dim);border:1px solid rgba(201,168,76,0.3);color:var(--gold);font-family:'Cinzel',serif;font-size:0.62rem;letter-spacing:0.06em;padding:4px 10px;border-radius:5px;cursor:pointer;transition:all 0.2s;white-space:nowrap}
+.prod-btn:hover{background:rgba(201,168,76,0.2);border-color:var(--gold)}
+.prod-btn.active{background:var(--gold);color:var(--bg)}
+.prod-btn.danger{border-color:rgba(192,57,43,0.4);color:var(--red)}
+.prod-btn.danger:hover{background:rgba(192,57,43,0.15)}
+
+/* TIMER */
+.timer-display{font-family:'Cinzel',serif;font-size:1.4rem;color:var(--gold);text-align:center;letter-spacing:0.08em;padding:4px 0;line-height:1}
+.timer-display.warning{color:var(--orange);animation:timerPulse 1s ease-in-out infinite}
+.timer-display.expired{color:var(--red);animation:timerPulse 0.5s ease-in-out infinite}
+.timer-session-label{font-size:0.68rem;color:var(--muted);text-align:center;margin-bottom:2px}
+@keyframes timerPulse{0%,100%{opacity:1}50%{opacity:0.5}}
+
+/* PROJECTED TIMER (on verse panel / projector) */
+.proj-timer{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:80;display:none;flex-direction:column;align-items:center;gap:12px;pointer-events:none}
+.proj-timer.show{display:flex}
+.proj-timer-label{font-family:'Cinzel',serif;font-size:1.6rem;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;text-shadow:0 2px 12px rgba(0,0,0,0.6)}
+.proj-timer-time{font-family:'Cinzel',serif;font-size:6rem;color:var(--text);letter-spacing:0.1em;text-shadow:0 4px 20px rgba(0,0,0,0.7);line-height:1}
+.proj-timer-time.warning{color:var(--orange)}
+.proj-timer-time.expired{color:var(--red);animation:timerPulse 0.5s ease-in-out infinite}
+
+/* LOWER THIRD */
+.lt-bar{position:fixed;bottom:0;left:0;right:0;z-index:90;transform:translateY(100%);transition:transform 0.4s ease-out;pointer-events:none}
+.lt-bar.show{transform:translateY(0)}
+.lt-content{padding:14px 32px;display:flex;flex-direction:column;gap:2px}
+.lt-title{font-family:'Cinzel',serif;font-size:1.3rem;letter-spacing:0.08em}
+.lt-subtitle{font-family:'EB Garamond',serif;font-size:0.92rem;opacity:0.8}
+
+.lt-bar.lt-speaker{background:linear-gradient(180deg,rgba(17,19,24,0.92) 0%,rgba(17,19,24,0.98) 100%);border-top:2px solid var(--gold)}
+.lt-bar.lt-speaker .lt-title{color:var(--gold-light)}
+.lt-bar.lt-speaker .lt-subtitle{color:var(--muted)}
+
+.lt-bar.lt-announce{background:linear-gradient(180deg,rgba(17,19,24,0.92) 0%,rgba(17,19,24,0.98) 100%);border-top:2px solid var(--gold)}
+.lt-bar.lt-announce .lt-title{color:var(--text);font-size:1.1rem}
+.lt-bar.lt-announce .lt-subtitle{color:var(--muted)}
+
+.lt-bar.lt-emergency{background:linear-gradient(180deg,rgba(120,20,20,0.94) 0%,rgba(80,15,15,0.98) 100%);border-top:3px solid var(--red)}
+.lt-bar.lt-emergency .lt-title{color:#fff;font-size:1.4rem}
+.lt-bar.lt-emergency .lt-subtitle{color:rgba(255,255,255,0.8)}
+.lt-bar.lt-emergency.pulse{animation:ltPulse 1.5s ease-in-out infinite}
+@keyframes ltPulse{0%,100%{opacity:1}50%{opacity:0.7}}
+
+/* DYNAMIC BACKGROUND CANVAS */
+#bgCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
+body>*:not(#bgCanvas){position:relative;z-index:1}
 </style>
 </head>
 <body>
+
+<canvas id="bgCanvas"></canvas>
+
+<!-- Projected Timer Overlay -->
+<div class="proj-timer" id="projTimer">
+  <div class="proj-timer-label" id="projTimerLabel"></div>
+  <div class="proj-timer-time" id="projTimerTime">00:00</div>
+</div>
+
+<!-- Lower Third Overlay -->
+<div class="lt-bar" id="lowerThird">
+  <div class="lt-content">
+    <div class="lt-title" id="ltTitleDisplay"></div>
+    <div class="lt-subtitle" id="ltSubtitleDisplay"></div>
+  </div>
+</div>
 
 <div id="banner">
   <div class="b-text">
@@ -505,6 +582,90 @@ main{flex:1;display:grid;grid-template-columns:340px 1fr 280px;overflow:hidden}
         Generate Sermon Summary
       </button>
       <div class="ai-usage-inline" id="aiUsageText">Loading…</div>
+    </div>
+
+    <!-- ═══ PRODUCTION SECTION ═══ -->
+    <div class="prod-section">
+      <div class="sec-label">Production</div>
+
+      <!-- Theme & Background -->
+      <div class="prod-group">
+        <div class="prod-row">
+          <label>Theme</label>
+          <select class="prod-select" id="themeSelect">
+            <option value="classic-dark">Classic Dark</option>
+            <option value="modern-light">Modern Light</option>
+            <option value="stained-glass">Stained Glass</option>
+            <option value="minimal">Minimal</option>
+            <option value="nature">Nature</option>
+            <option value="royal">Royal</option>
+          </select>
+        </div>
+        <div class="prod-row">
+          <label>BG</label>
+          <select class="prod-select" id="bgSelect">
+            <option value="none">None</option>
+            <option value="gradient-drift">Gradient Drift</option>
+            <option value="particle-float">Particle Float</option>
+            <option value="light-rays">Light Rays</option>
+            <option value="starfield">Starfield</option>
+            <option value="abstract-waves">Abstract Waves</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Timer -->
+      <div class="prod-group">
+        <div class="prod-group-label">Session Timer</div>
+        <div class="prod-row">
+          <label>Session</label>
+          <input class="prod-input" id="timerLabel" type="text" placeholder="e.g. Sermon" maxlength="40"/>
+        </div>
+        <div class="prod-row">
+          <label>Duration</label>
+          <input class="prod-input" id="timerDuration" type="text" placeholder="mm:ss" maxlength="5" style="max-width:70px"/>
+          <input class="prod-input" id="timerWarn" type="number" placeholder="60" min="0" max="600" style="max-width:52px" title="Warning at (seconds)"/>
+          <span style="font-size:0.62rem;color:var(--muted)">warn(s)</span>
+        </div>
+        <div class="timer-session-label" id="timerSessionLabel"></div>
+        <div class="timer-display" id="timerDisplay">00:00</div>
+        <div class="prod-row" style="justify-content:center;gap:6px;margin-top:4px">
+          <button class="prod-btn" id="timerStartBtn">Start</button>
+          <button class="prod-btn" id="timerPauseBtn">Pause</button>
+          <button class="prod-btn" id="timerResetBtn">Reset</button>
+          <button class="prod-btn" id="timerProjectBtn" title="Show/hide timer on projector">Project</button>
+        </div>
+      </div>
+
+      <!-- Lower Third -->
+      <div class="prod-group">
+        <div class="prod-group-label">Lower Third</div>
+        <div class="prod-row">
+          <label>Type</label>
+          <select class="prod-select" id="ltType">
+            <option value="speaker">Speaker</option>
+            <option value="announce">Announcement</option>
+            <option value="emergency">Emergency</option>
+          </select>
+        </div>
+        <div class="prod-row">
+          <label>Title</label>
+          <input class="prod-input" id="ltTitle" type="text" placeholder="e.g. Pastor James" maxlength="80"/>
+        </div>
+        <div class="prod-row">
+          <label>Subtitle</label>
+          <input class="prod-input" id="ltSubtitle" type="text" placeholder="e.g. Senior Pastor" maxlength="120"/>
+        </div>
+        <div class="prod-row" id="ltDurationRow">
+          <label>Duration</label>
+          <input class="prod-input" id="ltDurationInput" type="number" value="15" min="3" max="60" style="max-width:60px"/>
+          <span style="font-size:0.62rem;color:var(--muted)">seconds</span>
+        </div>
+        <div class="prod-row" style="justify-content:center;gap:6px">
+          <button class="prod-btn" id="ltShowBtn">Show</button>
+          <button class="prod-btn danger" id="ltHideBtn">Hide</button>
+        </div>
+      </div>
     </div>
 
   </div>
@@ -4867,6 +5028,420 @@ function deduplicateResults(results) {
   return Array.from(best.values());
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// STAGE 1: THEME PRESETS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const THEMES = {
+  'classic-dark': {
+    '--bg':'#0b0c0f','--panel':'#111318','--border':'#2a2b35',
+    '--gold':'#c9a84c','--gold-light':'#e8c97a','--gold-dim':'rgba(201,168,76,0.1)',
+    '--text':'#e8e4d8','--muted':'#8a8980','--red':'#c0392b','--orange':'#e67e22',
+    '--green':'#27ae60'
+  },
+  'modern-light': {
+    '--bg':'#f5f5f0','--panel':'#ffffff','--border':'#d4d4d0',
+    '--gold':'#1a365d','--gold-light':'#2c5282','--gold-dim':'rgba(26,54,93,0.08)',
+    '--text':'#1a1a1a','--muted':'#6b6b6b','--red':'#c0392b','--orange':'#e67e22',
+    '--green':'#27ae60'
+  },
+  'stained-glass': {
+    '--bg':'#1a0e2e','--panel':'#221440','--border':'#3a2a5a',
+    '--gold':'#d4a017','--gold-light':'#f0c040','--gold-dim':'rgba(212,160,23,0.1)',
+    '--text':'#e8dcc8','--muted':'#9a8a7a','--red':'#c0392b','--orange':'#e67e22',
+    '--green':'#27ae60'
+  },
+  'minimal': {
+    '--bg':'#000000','--panel':'#0a0a0a','--border':'#222222',
+    '--gold':'#ffffff','--gold-light':'#ffffff','--gold-dim':'rgba(255,255,255,0.06)',
+    '--text':'#ffffff','--muted':'#888888','--red':'#ff4444','--orange':'#ffaa00',
+    '--green':'#44ff44'
+  },
+  'nature': {
+    '--bg':'#0a1a0a','--panel':'#0f1f0f','--border':'#1a3a1a',
+    '--gold':'#4a8c5c','--gold-light':'#6ab87a','--gold-dim':'rgba(74,140,92,0.1)',
+    '--text':'#d8e8d8','--muted':'#7a9a7a','--red':'#c0392b','--orange':'#e67e22',
+    '--green':'#27ae60'
+  },
+  'royal': {
+    '--bg':'#0a0e1a','--panel':'#0f1428','--border':'#1a2a4a',
+    '--gold':'#a8b4c4','--gold-light':'#c8d4e4','--gold-dim':'rgba(168,180,196,0.08)',
+    '--text':'#d8dce8','--muted':'#7a8a9a','--red':'#c0392b','--orange':'#e67e22',
+    '--green':'#27ae60'
+  }
+};
+
+function applyTheme(name) {
+  const theme = THEMES[name];
+  if (!theme) return;
+  const root = document.documentElement;
+  for (const [prop, val] of Object.entries(theme)) {
+    root.style.setProperty(prop, val);
+  }
+  localStorage.setItem('va-theme', name);
+  $('themeSelect').value = name;
+}
+
+function initThemes() {
+  const saved = localStorage.getItem('va-theme') || 'classic-dark';
+  applyTheme(saved);
+  $('themeSelect').addEventListener('change', e => applyTheme(e.target.value));
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// STAGE 1: DYNAMIC BACKGROUNDS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const BG_ENGINES = {};
+let _activeBg = null;
+let _bgRafId = null;
+
+function getThemeColor(varName) {
+  return getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+}
+
+function hexToRgb(hex) {
+  hex = hex.replace('#','');
+  if (hex.length === 3) hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
+  const n = parseInt(hex, 16);
+  return [(n>>16)&255, (n>>8)&255, n&255];
+}
+
+// — Gradient Drift —
+BG_ENGINES['gradient-drift'] = {
+  _t: 0,
+  start(ctx, w, h) { this._t = 0; },
+  draw(ctx, w, h) {
+    this._t += 0.003;
+    const accent = getThemeColor('--gold');
+    const [r,g,b] = hexToRgb(accent);
+    const x = w * (0.5 + 0.3 * Math.sin(this._t));
+    const y = h * (0.5 + 0.3 * Math.cos(this._t * 0.7));
+    const grad = ctx.createRadialGradient(x, y, 0, x, y, Math.max(w,h) * 0.6);
+    grad.addColorStop(0, `rgba(${r},${g},${b},0.08)`);
+    grad.addColorStop(1, 'transparent');
+    ctx.clearRect(0,0,w,h);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0,0,w,h);
+  }
+};
+
+// — Particle Float —
+BG_ENGINES['particle-float'] = {
+  _particles: [],
+  start(ctx, w, h) {
+    this._particles = [];
+    for (let i = 0; i < 40; i++) {
+      this._particles.push({
+        x: Math.random() * w,
+        y: Math.random() * h,
+        r: Math.random() * 2 + 0.5,
+        vy: -(Math.random() * 0.3 + 0.1),
+        vx: (Math.random() - 0.5) * 0.2,
+        o: Math.random() * 0.4 + 0.1
+      });
+    }
+  },
+  draw(ctx, w, h) {
+    const accent = getThemeColor('--gold');
+    const [r,g,b] = hexToRgb(accent);
+    ctx.clearRect(0,0,w,h);
+    for (const p of this._particles) {
+      p.x += p.vx;
+      p.y += p.vy;
+      if (p.y < -10) { p.y = h + 10; p.x = Math.random() * w; }
+      if (p.x < -10) p.x = w + 10;
+      if (p.x > w + 10) p.x = -10;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${r},${g},${b},${p.o})`;
+      ctx.fill();
+    }
+  }
+};
+
+// — Light Rays —
+BG_ENGINES['light-rays'] = {
+  _t: 0,
+  start(ctx, w, h) { this._t = 0; },
+  draw(ctx, w, h) {
+    this._t += 0.002;
+    const accent = getThemeColor('--gold');
+    const [r,g,b] = hexToRgb(accent);
+    ctx.clearRect(0,0,w,h);
+    for (let i = 0; i < 5; i++) {
+      const angle = (this._t + i * 1.2) % (Math.PI * 2);
+      const cx = w * 0.5;
+      const cy = -h * 0.1;
+      const len = Math.max(w,h) * 1.4;
+      const spread = 0.06;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + Math.cos(angle - spread) * len, cy + Math.sin(angle - spread) * len);
+      ctx.lineTo(cx + Math.cos(angle + spread) * len, cy + Math.sin(angle + spread) * len);
+      ctx.closePath();
+      ctx.fillStyle = `rgba(${r},${g},${b},0.03)`;
+      ctx.fill();
+    }
+  }
+};
+
+// — Starfield —
+BG_ENGINES['starfield'] = {
+  _stars: [],
+  start(ctx, w, h) {
+    this._stars = [];
+    for (let i = 0; i < 120; i++) {
+      this._stars.push({
+        x: Math.random() * w,
+        y: Math.random() * h,
+        z: Math.random() * 3 + 0.5,
+        o: Math.random() * 0.6 + 0.2
+      });
+    }
+  },
+  draw(ctx, w, h) {
+    const accent = getThemeColor('--gold');
+    const [r,g,b] = hexToRgb(accent);
+    ctx.clearRect(0,0,w,h);
+    const cx = w / 2, cy = h / 2;
+    for (const s of this._stars) {
+      s.x += (s.x - cx) * 0.001 * s.z;
+      s.y += (s.y - cy) * 0.001 * s.z;
+      if (s.x < 0 || s.x > w || s.y < 0 || s.y > h) {
+        s.x = cx + (Math.random() - 0.5) * 100;
+        s.y = cy + (Math.random() - 0.5) * 100;
+        s.z = Math.random() * 3 + 0.5;
+      }
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.z * 0.6, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${r},${g},${b},${s.o})`;
+      ctx.fill();
+    }
+  }
+};
+
+// — Abstract Waves —
+BG_ENGINES['abstract-waves'] = {
+  _t: 0,
+  start(ctx, w, h) { this._t = 0; },
+  draw(ctx, w, h) {
+    this._t += 0.008;
+    const accent = getThemeColor('--gold');
+    const [r,g,b] = hexToRgb(accent);
+    ctx.clearRect(0,0,w,h);
+    for (let wave = 0; wave < 3; wave++) {
+      ctx.beginPath();
+      const yBase = h * (0.35 + wave * 0.15);
+      const amp = 30 + wave * 15;
+      const freq = 0.003 + wave * 0.001;
+      const phase = this._t + wave * 2;
+      for (let x = 0; x <= w; x += 3) {
+        const y = yBase + Math.sin(x * freq + phase) * amp + Math.sin(x * freq * 2.3 + phase * 1.5) * (amp * 0.3);
+        if (x === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.strokeStyle = `rgba(${r},${g},${b},${0.06 - wave * 0.015})`;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+  }
+};
+
+function startBackground(name) {
+  const canvas = $('bgCanvas');
+  const ctx = canvas.getContext('2d');
+  stopBackground();
+  if (name === 'none' || !BG_ENGINES[name]) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    localStorage.setItem('va-bg', 'none');
+    return;
+  }
+  const engine = BG_ENGINES[name];
+  _activeBg = name;
+  localStorage.setItem('va-bg', name);
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    engine.start(ctx, canvas.width, canvas.height);
+  }
+  resize();
+  window.addEventListener('resize', resize);
+  engine._resizeHandler = resize;
+
+  function loop() {
+    if (_activeBg !== name) return;
+    if (!document.hidden) {
+      engine.draw(ctx, canvas.width, canvas.height);
+    }
+    _bgRafId = requestAnimationFrame(loop);
+  }
+  loop();
+}
+
+function stopBackground() {
+  if (_bgRafId) { cancelAnimationFrame(_bgRafId); _bgRafId = null; }
+  if (_activeBg && BG_ENGINES[_activeBg] && BG_ENGINES[_activeBg]._resizeHandler) {
+    window.removeEventListener('resize', BG_ENGINES[_activeBg]._resizeHandler);
+  }
+  _activeBg = null;
+}
+
+function initBackgrounds() {
+  const saved = localStorage.getItem('va-bg') || 'none';
+  $('bgSelect').value = saved;
+  startBackground(saved);
+  $('bgSelect').addEventListener('change', e => startBackground(e.target.value));
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// STAGE 1: COUNTDOWN / SESSION TIMER
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const timerState = { totalSeconds: 0, remaining: 0, running: false, intervalId: null, projected: false, warnAt: 60 };
+
+function parseTimerDuration(str) {
+  str = (str || '').trim();
+  if (!str) return 0;
+  const parts = str.split(':');
+  if (parts.length === 2) return (parseInt(parts[0],10)||0)*60 + (parseInt(parts[1],10)||0);
+  if (parts.length === 1) return (parseInt(parts[0],10)||0)*60;
+  return 0;
+}
+
+function formatTimer(seconds) {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+}
+
+function updateTimerDisplay() {
+  const display = $('timerDisplay');
+  const projTime = $('projTimerTime');
+  const projLabel = $('projTimerLabel');
+  const label = $('timerLabel').value.trim();
+  const timeStr = formatTimer(timerState.remaining);
+
+  display.textContent = timeStr;
+  projTime.textContent = timeStr;
+  projLabel.textContent = label;
+  $('timerSessionLabel').textContent = label;
+
+  // Warning / expired states
+  display.classList.remove('warning','expired');
+  projTime.classList.remove('warning','expired');
+  if (timerState.remaining <= 0 && timerState.totalSeconds > 0) {
+    display.classList.add('expired');
+    projTime.classList.add('expired');
+  } else if (timerState.remaining <= timerState.warnAt && timerState.remaining > 0) {
+    display.classList.add('warning');
+    projTime.classList.add('warning');
+  }
+}
+
+function timerTick() {
+  if (timerState.remaining > 0) {
+    timerState.remaining--;
+    updateTimerDisplay();
+    if (timerState.remaining <= 0) {
+      clearInterval(timerState.intervalId);
+      timerState.running = false;
+      $('timerStartBtn').textContent = 'Start';
+    }
+  }
+}
+
+function initTimer() {
+  $('timerStartBtn').addEventListener('click', () => {
+    if (timerState.running) return;
+    if (timerState.remaining <= 0) {
+      const secs = parseTimerDuration($('timerDuration').value);
+      if (secs <= 0) return;
+      timerState.totalSeconds = secs;
+      timerState.remaining = secs;
+    }
+    timerState.warnAt = parseInt($('timerWarn').value, 10) || 60;
+    timerState.running = true;
+    timerState.intervalId = setInterval(timerTick, 1000);
+    $('timerStartBtn').textContent = 'Running';
+    updateTimerDisplay();
+  });
+
+  $('timerPauseBtn').addEventListener('click', () => {
+    if (!timerState.running) return;
+    clearInterval(timerState.intervalId);
+    timerState.running = false;
+    $('timerStartBtn').textContent = 'Resume';
+  });
+
+  $('timerResetBtn').addEventListener('click', () => {
+    clearInterval(timerState.intervalId);
+    timerState.running = false;
+    timerState.remaining = 0;
+    timerState.totalSeconds = 0;
+    $('timerStartBtn').textContent = 'Start';
+    updateTimerDisplay();
+  });
+
+  $('timerProjectBtn').addEventListener('click', () => {
+    timerState.projected = !timerState.projected;
+    $('projTimer').classList.toggle('show', timerState.projected);
+    $('timerProjectBtn').classList.toggle('active', timerState.projected);
+  });
+
+  updateTimerDisplay();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// STAGE 1: LOWER THIRDS & ALERTS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+let _ltAutoHideTimeout = null;
+
+function showLowerThird() {
+  const type = $('ltType').value;
+  const title = $('ltTitle').value.trim();
+  const subtitle = $('ltSubtitle').value.trim();
+  if (!title && !subtitle) return;
+
+  const bar = $('lowerThird');
+  bar.className = 'lt-bar lt-' + type;
+  $('ltTitleDisplay').textContent = title;
+  $('ltSubtitleDisplay').textContent = subtitle;
+
+  if (type === 'emergency') bar.classList.add('pulse');
+
+  // Clear any previous auto-hide
+  if (_ltAutoHideTimeout) { clearTimeout(_ltAutoHideTimeout); _ltAutoHideTimeout = null; }
+
+  // Show with slight delay for CSS transition
+  requestAnimationFrame(() => bar.classList.add('show'));
+
+  // Auto-hide for announcements
+  if (type === 'announce') {
+    const dur = (parseInt($('ltDurationInput').value, 10) || 15) * 1000;
+    _ltAutoHideTimeout = setTimeout(hideLowerThird, dur);
+  }
+}
+
+function hideLowerThird() {
+  if (_ltAutoHideTimeout) { clearTimeout(_ltAutoHideTimeout); _ltAutoHideTimeout = null; }
+  $('lowerThird').classList.remove('show');
+}
+
+function initLowerThirds() {
+  $('ltShowBtn').addEventListener('click', showLowerThird);
+  $('ltHideBtn').addEventListener('click', hideLowerThird);
+
+  // Show/hide duration row based on type
+  $('ltType').addEventListener('change', () => {
+    $('ltDurationRow').style.display = $('ltType').value === 'announce' ? 'flex' : 'none';
+  });
+  // Initial state
+  $('ltDurationRow').style.display = 'none';
+}
+
 (async function startup() {
   // Apply current network status immediately
   applyNetworkStatus(navigator.onLine);
@@ -4882,6 +5457,12 @@ function deduplicateResults(results) {
 
   // Initialise AI Companion usage display
   updateAiUsageDisplay();
+
+  // Stage 1: Production features
+  initThemes();
+  initBackgrounds();
+  initTimer();
+  initLowerThirds();
 })();
 </script>
 <!-- Electron hot-update notification -->
